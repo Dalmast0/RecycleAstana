@@ -110,11 +110,12 @@
     </div>
 
 
+<!-- PAGE 5: 3D Virtual Garden -->
 <div id="page-garden" class="page">
     <div class="garden-container">
         <div class="garden-header">
-            <h1>🌳 Your Eco Garden</h1>
-            <p class="garden-subtitle">Plant trees and flowers with your eco-points!</p>
+            <h1>🌳 Your 3D Eco Garden</h1>
+            <p class="garden-subtitle">Plant trees and watch your garden grow in 3D!</p>
             <div class="garden-stats">
                 <div class="garden-stat">
                     <span class="stat-icon">💰</span>
@@ -122,7 +123,7 @@
                 </div>
                 <div class="garden-stat">
                     <span class="stat-icon">🌱</span>
-                    <span>Plants Owned: <strong id="totalPlants">0</strong></span>
+                    <span>Plants: <strong id="totalPlants">0</strong></span>
                 </div>
                 <div class="garden-stat">
                     <span class="stat-icon">🌍</span>
@@ -131,77 +132,94 @@
             </div>
         </div>
 
+        <!-- Plant Shop -->
         <div class="plant-shop">
             <h2>🏪 Plant Shop</h2>
             <div class="plant-items">
-                <div class="plant-item" onclick="buyPlant('tree', 500, '🌳', 21)">
+                <div class="plant-item" onclick="selectPlant('tree1', 500, '🌳', 21, '#2d5016', 3)">
                     <div class="plant-icon">🌳</div>
                     <div class="plant-name">Oak Tree</div>
                     <div class="plant-price">500 pts</div>
                     <div class="plant-benefit">21 kg CO₂/year</div>
+                    <div class="plant-tag">Tall</div>
                 </div>
 
-                <div class="plant-item" onclick="buyPlant('pine', 400, '🌲', 18)">
+                <div class="plant-item" onclick="selectPlant('tree2', 400, '🌲', 18, '#1a4d2e', 3.5)">
                     <div class="plant-icon">🌲</div>
                     <div class="plant-name">Pine Tree</div>
                     <div class="plant-price">400 pts</div>
                     <div class="plant-benefit">18 kg CO₂/year</div>
+                    <div class="plant-tag">Tall</div>
                 </div>
 
-                <div class="plant-item" onclick="buyPlant('palm', 600, '🌴', 15)">
+                <div class="plant-item" onclick="selectPlant('tree3', 600, '🌴', 15, '#7d8f69', 4)">
                     <div class="plant-icon">🌴</div>
                     <div class="plant-name">Palm Tree</div>
                     <div class="plant-price">600 pts</div>
                     <div class="plant-benefit">15 kg CO₂/year</div>
+                    <div class="plant-tag">Tall</div>
                 </div>
 
-                <div class="plant-item" onclick="buyPlant('flower1', 100, '🌸', 2)">
+                <div class="plant-item" onclick="selectPlant('flower1', 100, '🌸', 2, '#ffb7c5', 1)">
                     <div class="plant-icon">🌸</div>
                     <div class="plant-name">Cherry Blossom</div>
                     <div class="plant-price">100 pts</div>
                     <div class="plant-benefit">2 kg CO₂/year</div>
+                    <div class="plant-tag">Small</div>
                 </div>
 
-                <div class="plant-item" onclick="buyPlant('flower2', 100, '🌺', 2)">
+                <div class="plant-item" onclick="selectPlant('flower2', 100, '🌺', 2, '#ff6b9d', 1)">
                     <div class="plant-icon">🌺</div>
                     <div class="plant-name">Hibiscus</div>
                     <div class="plant-price">100 pts</div>
                     <div class="plant-benefit">2 kg CO₂/year</div>
+                    <div class="plant-tag">Small</div>
                 </div>
 
-                <div class="plant-item" onclick="buyPlant('flower3', 100, '🌻', 2)">
+                <div class="plant-item" onclick="selectPlant('flower3', 100, '🌻', 2, '#ffd700', 1)">
                     <div class="plant-icon">🌻</div>
                     <div class="plant-name">Sunflower</div>
                     <div class="plant-price">100 pts</div>
                     <div class="plant-benefit">2 kg CO₂/year</div>
+                    <div class="plant-tag">Small</div>
                 </div>
 
-                <div class="plant-item" onclick="buyPlant('bush', 200, '🌿', 5)">
+                <div class="plant-item" onclick="selectPlant('bush', 200, '🌿', 5, '#4a7c59', 1.5)">
                     <div class="plant-icon">🌿</div>
                     <div class="plant-name">Bush</div>
                     <div class="plant-price">200 pts</div>
                     <div class="plant-benefit">5 kg CO₂/year</div>
+                    <div class="plant-tag">Medium</div>
                 </div>
 
-                <div class="plant-item" onclick="buyPlant('cactus', 150, '🌵', 3)">
+                <div class="plant-item" onclick="selectPlant('cactus', 150, '🌵', 3, '#6b8e23', 1.2)">
                     <div class="plant-icon">🌵</div>
                     <div class="plant-name">Cactus</div>
                     <div class="plant-price">150 pts</div>
                     <div class="plant-benefit">3 kg CO₂/year</div>
+                    <div class="plant-tag">Small</div>
                 </div>
             </div>
-        </div>
-
-        <!-- Garden Grid -->
-        <div class="garden-plot">
-            <h2>🏡 Your Garden Plot</h2>
-            <p class="garden-instruction">Click on empty spots to plant!</p>
-            <div class="garden-grid" id="gardenGrid">
-                <!-- Grid will be generated by JavaScript -->
+            <div class="selected-plant" id="selectedPlantInfo" style="display: none;">
+                <span id="selectedPlantText">No plant selected</span>
+                <button onclick="clearSelection()">✖ Cancel</button>
             </div>
         </div>
 
-        <!-- Actions -->
+        <!-- 3D Garden Canvas -->
+        <div class="garden-3d-container">
+            <div class="garden-controls">
+                <button onclick="rotateGardenLeft()" class="control-btn">↶ Rotate Left</button>
+                <button onclick="rotateGardenRight()" class="control-btn">↷ Rotate Right</button>
+                <button onclick="resetCamera()" class="control-btn">🎥 Reset View</button>
+            </div>
+            <canvas id="gardenCanvas"></canvas>
+            <div class="garden-hint">
+                <p>🖱️ Click on the garden to plant • Drag to rotate • Scroll to zoom</p>
+            </div>
+        </div>
+
+       
         <div class="garden-actions">
             <button onclick="clearGarden()" class="btn-danger">🗑️ Clear Garden</button>
             <button onclick="shareGarden()" class="btn-secondary">📤 Share Garden</button>

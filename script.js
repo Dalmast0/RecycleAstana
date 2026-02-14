@@ -257,190 +257,1020 @@ function updateLeaderboard() {
         list.appendChild(div);
     });
 }
-
-// ==================== NAV DISPLAY ====================
+//  NAV DISPLAY
 function updateNavDisplay() {
     document.getElementById('userPoints').textContent = `${userData.points} points`;
     document.getElementById('userLevel').textContent = `Level ${userData.level}`;
 }
-let gardenData = {
-    plots: Array(64).fill(null), // 8x8 grid
+
+
+// Everything lower is garden script
+
+let garden3D = {
+    canvas: null,
+    ctx: null,
+    plants: [],
     selectedPlant: null,
-    totalCO2: 0
+    rotation: 45,
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+    gridSize: 8,
+    cellSize: 60,
+    isDragging: false,
+    lastX: 0,
+    lastY: 0,
+    animationFrame: null
 };
 
-// Load garden from localStorage
-function loadGarden() {
-    const saved = localStorage.getItem('ecocity_garden');
-    if (saved) {
-        gardenData = JSON.parse(saved);
-    }
-    renderGarden();
-}
 
-// Save garden to localStorage
-function saveGarden() {
-    localStorage.setItem('ecocity_garden', JSON.stringify(gardenData));
-}
-
-// Initialize garden grid
-function initGarden() {
-    const grid = document.getElementById('gardenGrid');
-    grid.innerHTML = '';
-    
-    for (let i = 0; i < 64; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'garden-cell empty';
-        cell.dataset.index = i;
-        cell.onclick = () => plantInCell(i);
-        grid.appendChild(cell);
+class Plant3D {
+    constructor(x, y, type, icon, color, height, co2) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.icon = icon;
+        this.color = color;
+        this.height = height;
+        this.co2 = co2;
+        this.growthProgress = 0;
+        this.swayOffset = Math.random() * Math.PI * 2;
     }
     
-    loadGarden();
-    updateGardenStats();
+    update() {
+        if (this.growthProgress < 1) {
+            this.growthProgress += 0.05;
+        }
+    }
+    
+    draw(ctx, isometric) {
+        const scale = garden3D.scale;
+        const sway = Math.sin(Date.now() / 1000 + this.swayOffset) * 2;
+        
+        // Convert to isometric coordinates
+        const isoX = (this.x - this.y) * garden3D.cellSize * scale + isometric.centerX + garden3D.offsetX + sway;
+        const isoY = (this.x + this.y) * (garden3D.cellSize / 2) * scale + isometric.centerY + garden3D.offsetY;
+        
+        // Draw shadow
+        ctx.save();
+        ctx.globalAlpha = 0.3 * this.growthProgress;
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.ellipse(isoX, isoY + 10, 15 * scale * this.growthProgress, 5 * scale * this.growthProgress, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        
+        // Draw plant stem/trunk
+        const heightPixels = this.height * 20 * this.growthProgress;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 4 * scale * this.growthProgress;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(isoX, isoY);
+        ctx.lineTo(isoX, isoY - heightPixels);
+        ctx.stroke();
+        
+        // Draw plant icon
+        ctx.save();
+        ctx.font = `${35 * scale * this.growthProgress}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.icon, isoX, isoY - heightPixels - 15);
+        ctx.restore();
+    }
 }
-
-// Render garden state
-function renderGarden() {
-    gardenData.plots.forEach((plant, index) => {
-        const cell = document.querySelector(`[data-index="${index}"]`);
-        if (plant) {
-            cell.className = 'garden-cell planted';
-            cell.innerHTML = `
-                ${plant.icon}
-                <button class="remove-btn" onclick="removePlant(${index}, event)">×</button>
-            `;
-        } else {
-            cell.className = 'garden-cell empty';
-            cell.innerHTML = '';
+function findPlantIslands() {
+    const visited = new Set();
+    const islands = [];
+    
+    garden3D.plants.forEach(plant => {
+        const key = `${plant.x},${plant.y}`;
+        if (visited.has(key)) return;
+        
+        // Find all connected plants using BFS
+        const island = [];
+        const queue = [plant];
+        visited.add(key);
+        
+        while (queue.length > 0) {
+            const current = queue.shift();
+            island.push(current);
+            
+            // Check all 8 adjacent positions
+            const neighbors = [
+                [current.x - 1, current.y],
+                [current.x + 1, current.y],
+                [current.x, current.y - 1],
+                [current.x, current.y + 1],
+                [current.x - 1, current.y - 1],
+                [current.x + 1, current.y + 1],
+                [current.x - 1, current.y + 1],
+                [current.x + 1, current.y - 1]
+            ];
+            
+            neighbors.forEach(([nx, ny]) => {
+                const nKey = `${nx},${ny}`;
+                if (!visited.has(nKey)) {
+                    const neighbor = garden3D.plants.find(p => p.x === nx && p.y === ny);
+                    if (neighbor) {
+                        visited.add(nKey);
+                        queue.push(neighbor);
+                    }
+                }
+            });
+        }
+        
+        if (island.length > 0) {
+            islands.push(island);
         }
     });
+    
+    return islands;
 }
 
+function drawGardenBase(ctx, isometric) {
+    const gridSize = garden3D.gridSize;
+    const cellSize = garden3D.cellSize;
+    const scale = garden3D.scale;
+    
+    ctx.save();
+    
+    const totalWidth = gridSize * cellSize * scale;
+    const totalHeight = gridSize * cellSize * scale / 2;
+    const centerX = isometric.centerX + garden3D.offsetX;
+    const centerY = isometric.centerY + garden3D.offsetY;
+    const DEPTH = 15; 
+    
 
-function buyPlant(type, cost, icon, co2) {
-    if (userData.points < cost) {
-        alert(`❌ Not enough points! You need ${cost} points, but have ${userData.points}`);
-        return;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY + totalHeight / 2 + DEPTH + 5, 
+                totalWidth / 2 * 0.9, totalHeight / 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+   
+    ctx.fillStyle = '#5A4A3A';
+    ctx.beginPath();
+    ctx.moveTo(centerX - totalWidth / 2, centerY);
+    ctx.lineTo(centerX - totalWidth / 2, centerY + DEPTH);
+    ctx.lineTo(centerX, centerY + totalHeight / 2 + DEPTH);
+    ctx.lineTo(centerX, centerY + totalHeight / 2);
+    ctx.closePath();
+    ctx.fill();
+    
+    
+    ctx.fillStyle = '#6B5A4A';
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY + totalHeight / 2);
+    ctx.lineTo(centerX, centerY + totalHeight / 2 + DEPTH);
+    ctx.lineTo(centerX + totalWidth / 2, centerY + DEPTH);
+    ctx.lineTo(centerX + totalWidth / 2, centerY);
+    ctx.closePath();
+    ctx.fill();
+    
+    
+    const grassGradient = ctx.createRadialGradient(
+        centerX, centerY - totalHeight / 4, 0,
+        centerX, centerY, totalWidth / 2
+    );
+    grassGradient.addColorStop(0, '#8DB255');
+    grassGradient.addColorStop(0.5, '#7FA142');
+    grassGradient.addColorStop(1, '#6B8E3F');
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY - totalHeight / 2);
+    ctx.lineTo(centerX + totalWidth / 2, centerY);
+    ctx.lineTo(centerX, centerY + totalHeight / 2);
+    ctx.lineTo(centerX - totalWidth / 2, centerY);
+    ctx.closePath();
+    ctx.fillStyle = grassGradient;
+    ctx.fill();
+    
+    // 4. Border
+    ctx.strokeStyle = '#4A6B2F';
+    ctx.lineWidth = 5;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    
+    // 5. Subtle tile grid
+    ctx.strokeStyle = 'rgba(74, 107, 47, 0.12)';
+    ctx.lineWidth = 1;
+    
+    for (let x = 0; x < gridSize; x++) {
+        for (let y = 0; y < gridSize; y++) {
+            const isoX = (x - y) * cellSize * scale + centerX;
+            const isoY = (x + y) * (cellSize / 2) * scale + centerY;
+            
+            const halfSize = cellSize * scale / 2;
+            const quarterSize = cellSize * scale / 4;
+            
+            ctx.beginPath();
+            ctx.moveTo(isoX, isoY - quarterSize);
+            ctx.lineTo(isoX + halfSize, isoY);
+            ctx.lineTo(isoX, isoY + quarterSize);
+            ctx.lineTo(isoX - halfSize, isoY);
+            ctx.closePath();
+            ctx.stroke();
+        }
     }
     
-    gardenData.selectedPlant = { type, cost, icon, co2 };
-    alert(`✅ ${icon} selected! Click on empty spot in garden to plant.`);
+    // 6. Grass texture
+    ctx.fillStyle = 'rgba(107, 142, 63, 0.3)';
+    for (let i = 0; i < 100; i++) {
+        const randX = centerX + (Math.random() - 0.5) * totalWidth * 0.85;
+        const randY = centerY + (Math.random() - 0.5) * totalHeight * 0.85;
+        
+        // Grass blades (short lines)
+        ctx.save();
+        ctx.translate(randX, randY);
+        ctx.rotate(Math.random() * Math.PI);
+        ctx.fillRect(-0.5, -2, 1, 4);
+        ctx.restore();
+    }
+    
+    // 7. Highlights
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(centerX - totalWidth / 2 * 0.7, centerY - totalHeight / 2 * 0.4);
+    ctx.lineTo(centerX, centerY - totalHeight / 2 * 0.85);
+    ctx.stroke();
+    
+    ctx.restore();
 }
 
-// Plant in cell
-function plantInCell(index) {
-    if (!gardenData.selectedPlant) {
+function drawUnifiedTile(ctx, island, isometric) {
+    if (island.length === 0) return;
+    
+    const scale = garden3D.scale;
+    const cellSize = garden3D.cellSize;
+    
+    
+    const grid = {};
+    island.forEach(plant => {
+        grid[`${plant.x},${plant.y}`] = true;
+    });
+    
+    const xs = island.map(p => p.x);
+    const ys = island.map(p => p.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    
+    ctx.save();
+    
+    
+    const OVERLAP = 2; 
+    
+    for (let x = minX; x <= maxX; x++) {
+        for (let y = minY; y <= maxY; y++) {
+            if (!grid[`${x},${y}`]) continue;
+            
+            const isoX = (x - y) * cellSize * scale + isometric.centerX + garden3D.offsetX;
+            const isoY = (x + y) * (cellSize / 2) * scale + isometric.centerY + garden3D.offsetY;
+            
+            const halfSize = cellSize * scale / 2 + OVERLAP;
+            const quarterSize = cellSize * scale / 4 + OVERLAP;
+            
+            
+            ctx.fillStyle = '#5C4033';
+            ctx.beginPath();
+            ctx.moveTo(isoX, isoY - quarterSize + 8);
+            ctx.lineTo(isoX + halfSize, isoY + 8);
+            ctx.lineTo(isoX, isoY + quarterSize + 8);
+            ctx.lineTo(isoX - halfSize, isoY + 8);
+            ctx.closePath();
+            ctx.fill();
+            
+           
+            ctx.fillStyle = '#A0826D';
+            ctx.beginPath();
+            ctx.moveTo(isoX, isoY - quarterSize);
+            ctx.lineTo(isoX + halfSize, isoY);
+            ctx.lineTo(isoX, isoY + quarterSize);
+            ctx.lineTo(isoX - halfSize, isoY);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+    
+    
+    for (let x = minX; x <= maxX; x++) {
+        for (let y = minY; y <= maxY; y++) {
+            if (!grid[`${x},${y}`]) continue;
+            
+            const isoX = (x - y) * cellSize * scale + isometric.centerX + garden3D.offsetX;
+            const isoY = (x + y) * (cellSize / 2) * scale + isometric.centerY + garden3D.offsetY;
+            
+            const halfSize = cellSize * scale / 2 + OVERLAP;
+            const quarterSize = cellSize * scale / 4 + OVERLAP;
+            
+            
+            const gradient = ctx.createLinearGradient(isoX - halfSize, isoY, isoX + halfSize, isoY);
+            gradient.addColorStop(0, 'rgba(139, 111, 71, 0.5)');
+            gradient.addColorStop(0.5, 'rgba(184, 153, 104, 0.3)');
+            gradient.addColorStop(1, 'rgba(160, 130, 109, 0.5)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.moveTo(isoX, isoY - quarterSize);
+            ctx.lineTo(isoX + halfSize, isoY);
+            ctx.lineTo(isoX, isoY + quarterSize);
+            ctx.lineTo(isoX - halfSize, isoY);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+    
+    
+    ctx.strokeStyle = '#5C4033';
+    ctx.lineWidth = 4;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    
+    for (let x = minX; x <= maxX; x++) {
+        for (let y = minY; y <= maxY; y++) {
+            if (!grid[`${x},${y}`]) continue;
+            
+            const isoX = (x - y) * cellSize * scale + isometric.centerX + garden3D.offsetX;
+            const isoY = (x + y) * (cellSize / 2) * scale + isometric.centerY + garden3D.offsetY;
+            
+            const halfSize = cellSize * scale / 2;
+            const quarterSize = cellSize * scale / 4;
+            
+            const hasLeft = grid[`${x-1},${y}`];
+            const hasRight = grid[`${x+1},${y}`];
+            const hasTop = grid[`${x},${y-1}`];
+            const hasBottom = grid[`${x},${y+1}`];
+            
+            ctx.beginPath();
+            
+            if (!hasTop && !hasLeft) {
+                ctx.moveTo(isoX - halfSize, isoY);
+                ctx.lineTo(isoX, isoY - quarterSize);
+            }
+            if (!hasTop && !hasRight) {
+                if (ctx.lineTo) ctx.lineTo(isoX + halfSize, isoY);
+                else {
+                    ctx.moveTo(isoX, isoY - quarterSize);
+                    ctx.lineTo(isoX + halfSize, isoY);
+                }
+            }
+            if (!hasBottom && !hasRight) {
+                if (!hasTop && !hasRight) ctx.lineTo(isoX, isoY + quarterSize);
+                else {
+                    ctx.moveTo(isoX + halfSize, isoY);
+                    ctx.lineTo(isoX, isoY + quarterSize);
+                }
+            }
+            if (!hasBottom && !hasLeft) {
+                if (!hasBottom && !hasRight) ctx.lineTo(isoX - halfSize, isoY);
+                else {
+                    ctx.moveTo(isoX, isoY + quarterSize);
+                    ctx.lineTo(isoX - halfSize, isoY);
+                }
+            }
+            
+            ctx.stroke();
+        }
+    }
+    
+    ctx.restore();
+}
+
+function drawConnectedTile(ctx, x, y, size, hasLeft, hasRight, hasTop, hasBottom) {
+    ctx.save();
+    ctx.translate(x, y);
+    
+    // MAKE TILES BIGGER to overlap and remove gaps
+    const halfSize = size / 2 * 1.02; // 2% bigger!
+    const quarterSize = size / 4 * 1.02;
+    
+    // Shadow layer (depth) - even bigger
+    ctx.fillStyle = '#654321';
+    ctx.beginPath();
+    ctx.moveTo(0, -quarterSize + 7);
+    ctx.lineTo(halfSize + 1, 7);
+    ctx.lineTo(0, quarterSize + 7);
+    ctx.lineTo(-halfSize - 1, 7);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Main tile surface - FILLED COMPLETELY
+    ctx.beginPath();
+    ctx.moveTo(0, -quarterSize);
+    ctx.lineTo(halfSize + 1, 0); // Extend by 1px
+    ctx.lineTo(0, quarterSize);
+    ctx.lineTo(-halfSize - 1, 0); // Extend by 1px
+    ctx.closePath();
+    
+    // Gradient for 3D effect
+    const gradient = ctx.createLinearGradient(-halfSize, 0, halfSize, 0);
+    gradient.addColorStop(0, '#8B6F47');
+    gradient.addColorStop(0.5, '#A0826D');
+    gradient.addColorStop(1, '#8B7355');
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    
+    // Top surface (lighter) - BIGGER
+    ctx.beginPath();
+    ctx.moveTo(0, -quarterSize - 2);
+    ctx.lineTo(halfSize + 1, -2);
+    ctx.lineTo(0, quarterSize - 2);
+    ctx.lineTo(-halfSize - 1, -2);
+    ctx.closePath();
+    
+    const topGradient = ctx.createLinearGradient(-halfSize, -2, halfSize, -2);
+    topGradient.addColorStop(0, '#9D8562');
+    topGradient.addColorStop(0.5, '#B89968');
+    topGradient.addColorStop(1, '#A0826D');
+    ctx.fillStyle = topGradient;
+    ctx.fill();
+    
+    // Draw borders only where NOT connected
+    ctx.strokeStyle = '#654321';
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'miter';
+    
+    // Top-left edge
+    if (!hasTop && !hasLeft) {
+        ctx.beginPath();
+        ctx.moveTo(-halfSize - 1, 0);
+        ctx.lineTo(0, -quarterSize);
+        ctx.stroke();
+    }
+    
+    // Top-right edge
+    if (!hasTop && !hasRight) {
+        ctx.beginPath();
+        ctx.moveTo(0, -quarterSize);
+        ctx.lineTo(halfSize + 1, 0);
+        ctx.stroke();
+    }
+    
+    // Bottom-right edge
+    if (!hasBottom && !hasRight) {
+        ctx.beginPath();
+        ctx.moveTo(halfSize + 1, 0);
+        ctx.lineTo(0, quarterSize);
+        ctx.stroke();
+    }
+    
+    // Bottom-left edge
+    if (!hasBottom && !hasLeft) {
+        ctx.beginPath();
+        ctx.moveTo(0, quarterSize);
+        ctx.lineTo(-halfSize - 1, 0);
+        ctx.stroke();
+    }
+    
+    // Highlight on top surface
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-halfSize * 0.6, -quarterSize * 0.5);
+    ctx.lineTo(0, -quarterSize * 0.8);
+    ctx.stroke();
+    
+    // Texture dots
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    const random = Math.random();
+    for (let i = 0; i < 4; i++) {
+        const dotX = (Math.random() - 0.5) * halfSize * 1.4;
+        const dotY = (Math.random() - 0.5) * quarterSize * 1.2;
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    ctx.restore();
+}
+
+
+
+function init3DGarden() {
+    garden3D.canvas = document.getElementById('gardenCanvas');
+    garden3D.ctx = garden3D.canvas.getContext('2d');
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    loadGarden3D();
+    
+    garden3D.canvas.addEventListener('mousedown', onMouseDown);
+    garden3D.canvas.addEventListener('mousemove', onMouseMove);
+    garden3D.canvas.addEventListener('mouseup', onMouseUp);
+    garden3D.canvas.addEventListener('wheel', onWheel);
+    garden3D.canvas.addEventListener('click', onCanvasClick);
+    
+    // Touch events
+    garden3D.canvas.addEventListener('touchstart', onTouchStart);
+    garden3D.canvas.addEventListener('touchmove', onTouchMove);
+    garden3D.canvas.addEventListener('touchend', onTouchEnd);
+    
+    // Start animation loop
+    animate3DGarden();
+}
+
+function resizeCanvas() {
+    const container = garden3D.canvas.parentElement;
+    garden3D.canvas.width = container.clientWidth - 64;
+    garden3D.canvas.height = 500;
+}
+
+
+function animate3DGarden() {
+    draw3DGarden();
+    
+    // Update plants
+    garden3D.plants.forEach(plant => plant.update());
+    
+    garden3D.animationFrame = requestAnimationFrame(animate3DGarden);
+}
+
+
+function draw3DGarden() {
+    const ctx = garden3D.ctx;
+    const canvas = garden3D.canvas;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Calculate isometric center
+    const isometric = {
+        centerX: canvas.width / 2,
+        centerY: canvas.height / 2
+    };
+    
+    // FIRST: Draw the base garden plot (unified ground)
+    drawGardenBase(ctx, isometric);
+    
+    // SECOND: Find plant islands
+    const islands = findPlantIslands();
+    
+    // THIRD: Draw unified tiles for each island (dirt patches on grass)
+    islands.forEach(island => {
+        drawUnifiedTile(ctx, island, isometric);
+    });
+    
+    // FOURTH: Sort plants by depth for proper rendering
+    const sortedPlants = [...garden3D.plants].sort((a, b) => {
+        return (a.x + a.y) - (b.x + b.y);
+    });
+    
+    // FIFTH: Draw plants on top
+    sortedPlants.forEach(plant => plant.draw(ctx, isometric));
+    
+    // LAST: Draw placement guides if plant selected
+    if (garden3D.selectedPlant) {
+        drawPlacementGuides(ctx, isometric);
+    }
+}
+
+
+function drawGroundGrid(ctx, isometric) {
+    const gridSize = garden3D.gridSize;
+    const cellSize = garden3D.cellSize;
+    const scale = garden3D.scale;
+    
+    for (let x = 0; x < gridSize; x++) {
+        for (let y = 0; y < gridSize; y++) {
+            const isoX = (x - y) * cellSize * scale + isometric.centerX + garden3D.offsetX;
+            const isoY = (x + y) * (cellSize / 2) * scale + isometric.centerY + garden3D.offsetY;
+            
+            // Draw grass tile
+            ctx.save();
+            ctx.translate(isoX, isoY);
+            
+            // Isometric square
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(cellSize * scale / 2, cellSize * scale / 4);
+            ctx.lineTo(0, cellSize * scale / 2);
+            ctx.lineTo(-cellSize * scale / 2, cellSize * scale / 4);
+            ctx.closePath();
+            
+            // Gradient grass
+            const gradient = ctx.createLinearGradient(0, 0, 0, cellSize * scale / 2);
+            gradient.addColorStop(0, '#7CB342');
+            gradient.addColorStop(1, '#558B2F');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Border
+            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+    }
+}
+
+
+function drawPlacementGuides(ctx, isometric) {
+    const gridSize = garden3D.gridSize;
+    const cellSize = garden3D.cellSize;
+    const scale = garden3D.scale;
+    
+    for (let x = 0; x < gridSize; x++) {
+        for (let y = 0; y < gridSize; y++) {
+            // Check if spot is empty
+            const occupied = garden3D.plants.some(p => p.x === x && p.y === y);
+            if (occupied) continue;
+            
+            const isoX = (x - y) * cellSize * scale + isometric.centerX + garden3D.offsetX;
+            const isoY = (x + y) * (cellSize / 2) * scale + isometric.centerY + garden3D.offsetY;
+            
+            // Draw subtle dot marker
+            ctx.save();
+            ctx.fillStyle = 'rgba(40, 167, 69, 0.3)';
+            ctx.beginPath();
+            ctx.arc(isoX, isoY, 6 * scale, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = 'rgba(40, 167, 69, 0.6)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+}
+// Mouse/Touch handlers
+function onMouseDown(e) {
+    garden3D.isDragging = true;
+    garden3D.lastX = e.clientX;
+    garden3D.lastY = e.clientY;
+}
+function drawConnectedTile(ctx, x, y, size, hasLeft, hasRight, hasTop, hasBottom) {
+    ctx.save();
+    ctx.translate(x, y);
+    
+    const halfSize = size / 2;
+    const quarterSize = size / 4;
+    
+    
+    ctx.fillStyle = '#654321';
+    ctx.beginPath();
+    ctx.moveTo(0, -quarterSize + 6);
+    ctx.lineTo(halfSize, 6);
+    ctx.lineTo(0, quarterSize + 6);
+    ctx.lineTo(-halfSize, 6);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Main tile surface
+    ctx.beginPath();
+    ctx.moveTo(0, -quarterSize);
+    ctx.lineTo(halfSize, 0);
+    ctx.lineTo(0, quarterSize);
+    ctx.lineTo(-halfSize, 0);
+    ctx.closePath();
+    
+    // Gradient for 3D effect
+    const gradient = ctx.createLinearGradient(-halfSize, 0, halfSize, 0);
+    gradient.addColorStop(0, '#8B6F47');
+    gradient.addColorStop(0.5, '#A0826D');
+    gradient.addColorStop(1, '#8B7355');
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    
+    // Draw borders only where NOT connected
+    ctx.strokeStyle = '#654321';
+    ctx.lineWidth = 3;
+    
+    // Top-left edge
+    if (!hasTop && !hasLeft) {
+        ctx.beginPath();
+        ctx.moveTo(-halfSize, 0);
+        ctx.lineTo(0, -quarterSize);
+        ctx.stroke();
+    }
+    
+    // Top-right edge
+    if (!hasTop && !hasRight) {
+        ctx.beginPath();
+        ctx.moveTo(0, -quarterSize);
+        ctx.lineTo(halfSize, 0);
+        ctx.stroke();
+    }
+    
+    // Bottom-right edge
+    if (!hasBottom && !hasRight) {
+        ctx.beginPath();
+        ctx.moveTo(halfSize, 0);
+        ctx.lineTo(0, quarterSize);
+        ctx.stroke();
+    }
+    
+    // Bottom-left edge
+    if (!hasBottom && !hasLeft) {
+        ctx.beginPath();
+        ctx.moveTo(0, quarterSize);
+        ctx.lineTo(-halfSize, 0);
+        ctx.stroke();
+    }
+    
+    // Add highlight on top surface
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-halfSize * 0.7, -quarterSize * 0.3);
+    ctx.lineTo(-halfSize * 0.3, -quarterSize * 0.6);
+    ctx.lineTo(halfSize * 0.1, -quarterSize * 0.8);
+    ctx.stroke();
+    
+    // Add some texture dots
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    for (let i = 0; i < 3; i++) {
+        const dotX = (Math.random() - 0.5) * halfSize * 1.5;
+        const dotY = (Math.random() - 0.5) * quarterSize * 1.5;
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    ctx.restore();
+}
+function onMouseMove(e) {
+    if (!garden3D.isDragging) return;
+    
+    const dx = e.clientX - garden3D.lastX;
+    const dy = e.clientY - garden3D.lastY;
+    
+    garden3D.offsetX += dx;
+    garden3D.offsetY += dy;
+    
+    garden3D.lastX = e.clientX;
+    garden3D.lastY = e.clientY;
+}
+
+function onMouseUp(e) {
+    garden3D.isDragging = false;
+}
+
+function onWheel(e) {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    garden3D.scale = Math.max(0.5, Math.min(2, garden3D.scale * delta));
+}
+
+function onTouchStart(e) {
+    if (e.touches.length === 1) {
+        garden3D.isDragging = true;
+        garden3D.lastX = e.touches[0].clientX;
+        garden3D.lastY = e.touches[0].clientY;
+    }
+}
+
+function onTouchMove(e) {
+    if (!garden3D.isDragging || e.touches.length !== 1) return;
+    
+    const dx = e.touches[0].clientX - garden3D.lastX;
+    const dy = e.touches[0].clientY - garden3D.lastY;
+    
+    garden3D.offsetX += dx;
+    garden3D.offsetY += dy;
+    
+    garden3D.lastX = e.touches[0].clientX;
+    garden3D.lastY = e.touches[0].clientY;
+}
+
+function onTouchEnd(e) {
+    garden3D.isDragging = false;
+}
+
+// Click to plant
+function onCanvasClick(e) {
+    if (garden3D.isDragging) return;
+    if (!garden3D.selectedPlant) {
         alert('💡 Select a plant from the shop first!');
         return;
     }
     
-    if (gardenData.plots[index]) {
+    const rect = garden3D.canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // Convert mouse position to grid coordinates
+    const gridPos = screenToGrid(mouseX, mouseY);
+    
+    if (gridPos) {
+        plantInGrid3D(gridPos.x, gridPos.y);
+    }
+}
+
+// Convert screen coordinates to grid coordinates
+function screenToGrid(screenX, screenY) {
+    const canvas = garden3D.canvas;
+    const isoCenterX = canvas.width / 2 + garden3D.offsetX;
+    const isoCenterY = canvas.height / 2 + garden3D.offsetY;
+    
+    const cellSize = garden3D.cellSize * garden3D.scale;
+    
+    // Convert screen to isometric
+    const isoX = screenX - isoCenterX;
+    const isoY = screenY - isoCenterY;
+    
+    // Convert isometric to grid
+    const gridX = Math.floor((isoX / cellSize + isoY / (cellSize / 2)) / 2);
+    const gridY = Math.floor((isoY / (cellSize / 2) - isoX / cellSize) / 2);
+    
+    // Check if within bounds
+    if (gridX >= 0 && gridX < garden3D.gridSize && gridY >= 0 && gridY < garden3D.gridSize) {
+        return { x: gridX, y: gridY };
+    }
+    
+    return null;
+}
+
+// Select plant from shop
+// Update this function to pass image URL
+function selectPlant(type, cost, icon, co2, color, height, imageUrl) {
+    if (userData.points < cost) {
+        alert(`Not enough points! You need ${cost} points, but have ${userData.points}`);
+        return;
+    }
+    
+    garden3D.selectedPlant = { type, cost, icon, co2, color, height, imageUrl };
+    
+    // Update UI
+    document.getElementById('selectedPlantInfo').style.display = 'flex';
+    document.getElementById('selectedPlantText').textContent = `${icon} Selected: Click on garden to plant (${cost} pts)`;
+    
+    // Highlight selected plant in shop
+    document.querySelectorAll('.plant-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    event.target.closest('.plant-item').classList.add('selected');
+}
+function clearSelection() {
+    garden3D.selectedPlant = null;
+    document.getElementById('selectedPlantInfo').style.display = 'none';
+    document.querySelectorAll('.plant-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+}
+
+// Plant in grid
+function plantInGrid3D(x, y) {
+    const occupied = garden3D.plants.some(p => p.x === x && p.y === y);
+    if (occupied) {
         alert('⚠️ This spot is already planted!');
         return;
     }
     
-    const plant = gardenData.selectedPlant;
+    const plant = garden3D.selectedPlant;
     
-    // Deduct points
     userData.points -= plant.cost;
     
-    // Plant it
-    gardenData.plots[index] = plant;
-    gardenData.totalCO2 += plant.co2;
+    const newPlant = new Plant3D(
+        x, y, 
+        plant.type, 
+        plant.icon, 
+        plant.color, 
+        plant.height, 
+        plant.co2,
+        plant.imageUrl  // NEW: pass image URL
+    );
+    garden3D.plants.push(newPlant);
     
-    // Update UI
-    renderGarden();
+    // Update stats
     updateGardenStats();
     updateNavDisplay();
-    saveGarden();
+    saveGarden3D();
     
     // Clear selection
-    gardenData.selectedPlant = null;
+    clearSelection();
     
-    // Show success
-    const cell = document.querySelector(`[data-index="${index}"]`);
-    cell.style.animation = 'growPlant 0.5s ease-out';
-}
-
-// Remove plant from cell
-function removePlant(index, event) {
-    event.stopPropagation(); // Prevent cell click
-    
-    if (!confirm('🗑️ Remove this plant? You won\'t get points back.')) {
-        return;
-    }
-    
-    const plant = gardenData.plots[index];
-    if (plant) {
-        gardenData.totalCO2 -= plant.co2;
-        gardenData.plots[index] = null;
-        
-        renderGarden();
-        updateGardenStats();
-        saveGarden();
-    }
+    console.log(`🌱 Planted ${plant.icon} at (${x}, ${y})`);
 }
 
 // Update garden statistics
 function updateGardenStats() {
     document.getElementById('gardenPoints').textContent = userData.points;
+    document.getElementById('totalPlants').textContent = garden3D.plants.length;
     
-    const plantCount = gardenData.plots.filter(p => p !== null).length;
-    document.getElementById('totalPlants').textContent = plantCount;
-    
-    document.getElementById('gardenCO2').textContent = `${gardenData.totalCO2} kg/year`;
+    const totalCO2 = garden3D.plants.reduce((sum, plant) => sum + plant.co2, 0);
+    document.getElementById('gardenCO2').textContent = `${totalCO2} kg/year`;
 }
 
-// Clear entire garden
+// Save/Load garden
+function saveGarden3D() {
+    const saveData = {
+        plants: garden3D.plants.map(p => ({
+            x: p.x,
+            y: p.y,
+            type: p.type,
+            icon: p.icon,
+            color: p.color,
+            height: p.height,
+            co2: p.co2
+        }))
+    };
+    localStorage.setItem('ecocity_garden3d', JSON.stringify(saveData));
+}
+
+function loadGarden3D() {
+    const saved = localStorage.getItem('ecocity_garden3d');
+    if (saved) {
+        const data = JSON.parse(saved);
+        garden3D.plants = data.plants.map(p => 
+            new Plant3D(p.x, p.y, p.type, p.icon, p.color, p.height, p.co2)
+        );
+        garden3D.plants.forEach(p => p.growthProgress = 1); // Already grown
+    }
+}
+
+// Clear garden
 function clearGarden() {
     if (!confirm('🗑️ Clear entire garden? This cannot be undone!')) {
         return;
     }
     
-    gardenData.plots = Array(64).fill(null);
-    gardenData.totalCO2 = 0;
-    
-    renderGarden();
+    garden3D.plants = [];
+    saveGarden3D();
     updateGardenStats();
-    saveGarden();
-    
     alert('✅ Garden cleared!');
 }
 
 // Share garden
 function shareGarden() {
-    const plantCount = gardenData.plots.filter(p => p !== null).length;
-    const message = `🌳 My EcoCity Garden:\n${plantCount} plants planted\n${gardenData.totalCO2} kg CO₂ absorbed per year!\n\nJoin me in making the planet greener! 🌍`;
+    const plantCount = garden3D.plants.length;
+    const totalCO2 = garden3D.plants.reduce((sum, plant) => sum + plant.co2, 0);
+    const message = `🌳 My EcoCity 3D Garden:\n${plantCount} plants planted\n${totalCO2} kg CO₂ absorbed per year!\n\nJoin me in making the planet greener! 🌍`;
     
-    // Try to use Web Share API
     if (navigator.share) {
         navigator.share({
             title: 'My Eco Garden',
             text: message
         });
     } else {
-        // Fallback: copy to clipboard
         navigator.clipboard.writeText(message).then(() => {
             alert('📋 Garden stats copied to clipboard!');
         });
     }
 }
 
-// Update showPage function to handle garden
-const originalShowPage = showPage;
+// Camera controls
+function rotateGardenLeft() {
+    garden3D.rotation -= 45;
+}
+
+function rotateGardenRight() {
+    garden3D.rotation += 45;
+}
+
+function resetCamera() {
+    garden3D.scale = 1;
+    garden3D.offsetX = 0;
+    garden3D.offsetY = 0;
+    garden3D.rotation = 45;
+}
+
+// Update showPage to initialize garden
+const originalShowPage2 = showPage;
 showPage = function(pageName) {
-    originalShowPage(pageName);
+    if (typeof originalShowPage2 === 'function') {
+        originalShowPage2(pageName);
+    } else {
+        // Hide all pages
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.remove('active');
+        });
+        document.getElementById(`page-${pageName}`).classList.add('active');
+        
+        // Update nav
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        event.target.classList.add('active');
+    }
     
     if (pageName === 'garden') {
-        if (!document.getElementById('gardenGrid').hasChildNodes()) {
-            initGarden();
-        } else {
-            updateGardenStats();
+        if (!garden3D.canvas) {
+            setTimeout(() => init3DGarden(), 100);
         }
+        updateGardenStats();
+    }
+    
+    if (pageName === 'dashboard') {
+        updateDashboard();
+    }
+    
+    if (pageName === 'leaderboard') {
+        updateLeaderboard();
     }
 };
-// ==================== INIT ====================
+
+
+
+
+
+
+
+
 window.onload = function() {
     initMap();
     updateNavDisplay();
