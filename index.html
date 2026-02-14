@@ -3,242 +3,747 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoCity - Green Urban Platform</title>
+    <title>EcoCity - Urban Sustainability Platform</title>
     
-    <!-- Leaflet CSS for maps -->
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <!-- Our custom styles -->
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Top Navigation Bar -->
+   
     <nav class="navbar">
-        <div class="nav-brand">🌱 EcoCity</div>
-        <div class="nav-menu">
-            <a href="#" onclick="showPage('map')" class="nav-link active">Map</a>
-            <a href="#" onclick="showPage('dashboard')" class="nav-link">Dashboard</a>
-            <a href="#" onclick="showPage('scanner')" class="nav-link">Scanner</a>
-            <a href="#" onclick="showPage('garden')" class="nav-link">Garden</a>
-            <a href="#" onclick="showPage('leaderboard')" class="nav-link">Leaderboard</a>
-        </div>
-        <div class="user-info">
-            <span id="userPoints">0 points</span>
-            <span id="userLevel">Level 1</span>
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="brand-icon">⬢</span>
+                <span class="brand-text">ECOCITY</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#" onclick="showPage('map')" class="nav-link active">
+                    <span class="nav-icon">🗺</span>
+                    <span>Locations</span>
+                </a>
+                <a href="#" onclick="showPage('dashboard')" class="nav-link" id="navDashboard">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" onclick="showPage('scanner')" class="nav-link" id="navScanner">
+                    <span class="nav-icon">♻</span>
+                    <span>Log Activity</span>
+                </a>
+                <a href="#" onclick="showPage('initiatives')" class="nav-link">
+                    <span class="nav-icon">🤝</span>
+                    <span>Initiatives</span>
+                </a>
+                <a href="#" onclick="showPage('garden')" class="nav-link" id="navGarden">
+                    <span class="nav-icon">🌳</span>
+                    <span>Garden</span>
+                </a>
+                <a href="#" onclick="showPage('leaderboard')" class="nav-link">
+                    <span class="nav-icon">🏆</span>
+                    <span>Leaderboard</span>
+                </a>
+            </div>
+            <div class="user-info" id="userInfoContainer">
+                
+                <div class="auth-buttons" id="authButtons">
+                    <button class="btn-auth btn-login" onclick="openLoginModal()">Login</button>
+                    <button class="btn-auth btn-register" onclick="openRegisterModal()">Register</button>
+                </div>
+                
+              
+                <div class="user-profile" id="userProfile" style="display: none;">
+                    <div class="user-stats">
+                        <div class="user-stat">
+                            <span class="stat-label">Points</span>
+                            <span class="stat-value" id="userPoints">0</span>
+                        </div>
+                        <div class="user-stat">
+                            <span class="stat-label">Level</span>
+                            <span class="stat-value" id="userLevel">1</span>
+                        </div>
+                    </div>
+                    <div class="user-menu">
+                        <button class="user-menu-btn" onclick="toggleUserDropdown()">
+                            <span class="user-avatar">👤</span>
+                            <span class="user-name" id="userName">User</span>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown" style="display: none;">
+                            <div class="dropdown-item user-role-display">
+                                <span class="role-badge" id="userRoleBadge">Member</span>
+                            </div>
+                            <button class="dropdown-item dropdown-btn" onclick="handleLogout()">
+                                <span>🚪</span>
+                                <span>Logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </nav>
 
     <!-- PAGE 1: Map with Recycling Points -->
     <div id="page-map" class="page active">
-        <div class="filters">
-            <button class="filter-btn active" onclick="filterMap('all')">All</button>
-            <button class="filter-btn" onclick="filterMap('plastic')">🧴 Plastic</button>
-            <button class="filter-btn" onclick="filterMap('glass')">🍾 Glass</button>
-            <button class="filter-btn" onclick="filterMap('paper')">📄 Paper</button>
-            <button class="filter-btn" onclick="filterMap('metal')">🥫 Metal</button>
-            <button class="filter-btn" onclick="filterMap('batteries')">🔋 Batteries</button>
+        <div class="page-header">
+            <h1 class="page-title">Recycling Stations</h1>
+            <p class="page-subtitle">Find collection points across Astana</p>
         </div>
-        <div id="map"></div>
+        
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterMap('all')" data-filter="all">
+                <span class="filter-label">All Stations</span>
+            </button>
+            <button class="filter-btn" onclick="filterMap('plastic')" data-filter="plastic">
+                <span class="filter-icon">🧴</span>
+                <span class="filter-label">Plastic</span>
+            </button>
+            <button class="filter-btn" onclick="filterMap('glass')" data-filter="glass">
+                <span class="filter-icon">🍾</span>
+                <span class="filter-label">Glass</span>
+            </button>
+            <button class="filter-btn" onclick="filterMap('paper')" data-filter="paper">
+                <span class="filter-icon">📄</span>
+                <span class="filter-label">Paper</span>
+            </button>
+            <button class="filter-btn" onclick="filterMap('metal')" data-filter="metal">
+                <span class="filter-icon">🥫</span>
+                <span class="filter-label">Metal</span>
+            </button>
+            <button class="filter-btn" onclick="filterMap('batteries')" data-filter="batteries">
+                <span class="filter-icon">🔋</span>
+                <span class="filter-label">Batteries</span>
+            </button>
+        </div>
+        
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
     </div>
 
     <!-- PAGE 2: User Dashboard -->
     <div id="page-dashboard" class="page">
+        <div class="page-header">
+            <h1 class="page-title">Your Impact</h1>
+            <p class="page-subtitle">Environmental contribution tracking</p>
+        </div>
+        
         <div class="dashboard">
-            <h1>Your Eco Impact 🌍</h1>
-            
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">🏆</div>
-                    <div class="stat-value" id="totalPoints">0</div>
-                    <div class="stat-label">Eco Points</div>
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-card-header">
+                        <span class="stat-card-icon">🏆</span>
+                        <span class="stat-card-title">Eco Points</span>
+                    </div>
+                    <div class="stat-card-value" id="totalPoints">0</div>
+                    <div class="stat-card-trend">+0 this week</div>
                 </div>
                 
-                <div class="stat-card">
-                    <div class="stat-icon">♻️</div>
-                    <div class="stat-value" id="totalRecycled">0 kg</div>
-                    <div class="stat-label">Total Recycled</div>
+                <div class="stat-card stat-card-success">
+                    <div class="stat-card-header">
+                        <span class="stat-card-icon">♻️</span>
+                        <span class="stat-card-title">Recycled</span>
+                    </div>
+                    <div class="stat-card-value" id="totalRecycled">0 kg</div>
+                    <div class="stat-card-trend">Total materials</div>
                 </div>
                 
-                <div class="stat-card">
-                    <div class="stat-icon">🌳</div>
-                    <div class="stat-value" id="co2Saved">0 kg</div>
-                    <div class="stat-label">CO₂ Saved</div>
+                <div class="stat-card stat-card-info">
+                    <div class="stat-card-header">
+                        <span class="stat-card-icon">🌳</span>
+                        <span class="stat-card-title">CO₂ Saved</span>
+                    </div>
+                    <div class="stat-card-value" id="co2Saved">0 kg</div>
+                    <div class="stat-card-trend">Carbon offset</div>
                 </div>
                 
-                <div class="stat-card">
-                    <div class="stat-icon">📊</div>
-                    <div class="stat-value" id="userRank">#1</div>
-                    <div class="stat-label">City Rank</div>
+                <div class="stat-card stat-card-warning">
+                    <div class="stat-card-header">
+                        <span class="stat-card-icon">📊</span>
+                        <span class="stat-card-title">City Rank</span>
+                    </div>
+                    <div class="stat-card-value" id="userRank">#1</div>
+                    <div class="stat-card-trend">of 7 participants</div>
                 </div>
             </div>
 
-            <div class="achievements">
-                <h2>🏅 Your Achievements</h2>
+            <div class="achievements-section">
+                <h2 class="section-title">Achievements</h2>
                 <div class="achievement-list" id="achievementList"></div>
             </div>
         </div>
     </div>
 
-    <!-- PAGE 3: Recycling Scanner/Logger -->
-    <div id="page-scanner" class="page">
-        <div class="scanner-container">
-            <h1>♻️ Log Your Recycling</h1>
-            
-            <div class="scanner-input">
-                <label for="itemType">What did you recycle?</label>
-                <select id="itemType" class="item-select">
-                    <option value="">-- Select item type --</option>
-                    <option value="plastic">🧴 Plastic Bottle/Container</option>
-                    <option value="glass">🍾 Glass Bottle/Jar</option>
-                    <option value="paper">📄 Paper/Cardboard</option>
-                    <option value="metal">🥫 Metal Can/Container</option>
-                    <option value="batteries">🔋 Battery</option>
-                </select>
+<div id="page-scanner" class="page">
+    <div class="page-header">
+        <h1 class="page-title">Log Activity</h1>
+        <p class="page-subtitle">Record your recycling contributions</p>
+    </div>
+    
+    <div class="scanner-container">
+        <!-- Location Verification Section -->
+        <div class="location-check">
+            <h3>📍 Step 1: Verify Your Location</h3>
+            <p class="help-text">You must be near a recycling point to log activity</p>
+            <button onclick="checkLocationForLogging()" class="btn-location" id="checkLocationBtn">
+                📍 Check My Location
+            </button>
+            <div id="locationStatus" class="location-status"></div>
+        </div>
+
+        <div class="scanner-form" id="recyclingForm" style="display: none;">
+            <h3>Step 2: Log What You Recycled</h3>
+                <div class="form-group">
+                    <label for="itemType" class="form-label">Material Type</label>
+                    <select id="itemType" class="form-select">
+                        <option value="">Select material</option>
+                        <option value="plastic">🧴 Plastic Bottle/Container</option>
+                        <option value="glass">🍾 Glass Bottle/Jar</option>
+                        <option value="paper">📄 Paper/Cardboard</option>
+                        <option value="metal">🥫 Metal Can/Container</option>
+                        <option value="batteries">🔋 Battery</option>
+                    </select>
+                </div>
                 
-                <label for="itemWeight">Weight (kg)</label>
-                <input type="number" id="itemWeight" class="weight-input" placeholder="0.5" step="0.1" min="0.1">
+                <div class="form-group">
+                    <label for="itemWeight" class="form-label">Weight (kg)</label>
+                    <input type="number" id="itemWeight" class="form-input" placeholder="0.5" step="0.1" min="0.1">
+                </div>
                 
-                <button onclick="logRecycling()" class="btn-primary">Log Recycling Activity</button>
+                <button onclick="logRecycling()" class="btn btn-primary btn-large">
+                    <span>Submit Activity</span>
+                    <span class="btn-arrow">→</span>
+                </button>
             </div>
 
             <div id="scanResult" class="scan-result" style="display: none;">
-                <h2>Great job! 🎉</h2>
-                <p id="pointsEarned"></p>
-                <p id="impactMessage"></p>
+                <div class="result-icon">✓</div>
+                <h2 class="result-title">Activity Logged</h2>
+                <p class="result-points" id="pointsEarned"></p>
+                <p class="result-impact" id="impactMessage"></p>
             </div>
         </div>
     </div>
 
-
-<!-- PAGE 5: 3D Virtual Garden -->
-<div id="page-garden" class="page">
-    <div class="garden-container">
-        <div class="garden-header">
-            <h1>🌳 Your 3D Eco Garden</h1>
-            <p class="garden-subtitle">Plant trees and watch your garden grow in 3D!</p>
-            <div class="garden-stats">
-                <div class="garden-stat">
-                    <span class="stat-icon">💰</span>
-                    <span>Available Points: <strong id="gardenPoints">0</strong></span>
-                </div>
-                <div class="garden-stat">
-                    <span class="stat-icon">🌱</span>
-                    <span>Plants: <strong id="totalPlants">0</strong></span>
-                </div>
-                <div class="garden-stat">
-                    <span class="stat-icon">🌍</span>
-                    <span>CO₂ Absorbed: <strong id="gardenCO2">0 kg/year</strong></span>
-                </div>
-            </div>
+    <!-- PAGE 4: Eco Forest -->
+    <div id="page-garden" class="page">
+        <div class="page-header">
+            <h1 class="page-title">Eco Forest</h1>
+            <p class="page-subtitle">Grow a thriving forest ecosystem</p>
         </div>
-
-        <!-- Plant Shop -->
-        <div class="plant-shop">
-            <h2>🏪 Plant Shop</h2>
-            <div class="plant-items">
-                <div class="plant-item" onclick="selectPlant('tree1', 500, '🌳', 21, '#2d5016', 3)">
-                    <div class="plant-icon">🌳</div>
-                    <div class="plant-name">Oak Tree</div>
-                    <div class="plant-price">500 pts</div>
-                    <div class="plant-benefit">21 kg CO₂/year</div>
-                    <div class="plant-tag">Tall</div>
+        
+        <div class="forest-container">
+            
+            <div class="forest-hud">
+                <div class="hud-section">
+                    <div class="hud-label">Forest Health</div>
+                    <div class="hud-value-group">
+                        <div class="hud-value" id="forestHealth">0%</div>
+                        <div class="hud-bar">
+                            <div class="hud-bar-fill" id="healthBar" style="width: 0%"></div>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="plant-item" onclick="selectPlant('tree2', 400, '🌲', 18, '#1a4d2e', 3.5)">
-                    <div class="plant-icon">🌲</div>
-                    <div class="plant-name">Pine Tree</div>
-                    <div class="plant-price">400 pts</div>
-                    <div class="plant-benefit">18 kg CO₂/year</div>
-                    <div class="plant-tag">Tall</div>
+                
+                <div class="hud-section">
+                    <div class="hud-label">Trees</div>
+                    <div class="hud-value" id="totalTrees">0</div>
                 </div>
-
-                <div class="plant-item" onclick="selectPlant('tree3', 600, '🌴', 15, '#7d8f69', 4)">
-                    <div class="plant-icon">🌴</div>
-                    <div class="plant-name">Palm Tree</div>
-                    <div class="plant-price">600 pts</div>
-                    <div class="plant-benefit">15 kg CO₂/year</div>
-                    <div class="plant-tag">Tall</div>
+                
+                <div class="hud-section">
+                    <div class="hud-label">Wildlife</div>
+                    <div class="hud-value" id="wildlifeCount">0</div>
                 </div>
-
-                <div class="plant-item" onclick="selectPlant('flower1', 100, '🌸', 2, '#ffb7c5', 1)">
-                    <div class="plant-icon">🌸</div>
-                    <div class="plant-name">Cherry Blossom</div>
-                    <div class="plant-price">100 pts</div>
-                    <div class="plant-benefit">2 kg CO₂/year</div>
-                    <div class="plant-tag">Small</div>
+                
+                <div class="hud-section">
+                    <div class="hud-label">CO₂/Year</div>
+                    <div class="hud-value" id="forestCO2">0 kg</div>
                 </div>
-
-                <div class="plant-item" onclick="selectPlant('flower2', 100, '🌺', 2, '#ff6b9d', 1)">
-                    <div class="plant-icon">🌺</div>
-                    <div class="plant-name">Hibiscus</div>
-                    <div class="plant-price">100 pts</div>
-                    <div class="plant-benefit">2 kg CO₂/year</div>
-                    <div class="plant-tag">Small</div>
-                </div>
-
-                <div class="plant-item" onclick="selectPlant('flower3', 100, '🌻', 2, '#ffd700', 1)">
-                    <div class="plant-icon">🌻</div>
-                    <div class="plant-name">Sunflower</div>
-                    <div class="plant-price">100 pts</div>
-                    <div class="plant-benefit">2 kg CO₂/year</div>
-                    <div class="plant-tag">Small</div>
-                </div>
-
-                <div class="plant-item" onclick="selectPlant('bush', 200, '🌿', 5, '#4a7c59', 1.5)">
-                    <div class="plant-icon">🌿</div>
-                    <div class="plant-name">Bush</div>
-                    <div class="plant-price">200 pts</div>
-                    <div class="plant-benefit">5 kg CO₂/year</div>
-                    <div class="plant-tag">Medium</div>
-                </div>
-
-                <div class="plant-item" onclick="selectPlant('cactus', 150, '🌵', 3, '#6b8e23', 1.2)">
-                    <div class="plant-icon">🌵</div>
-                    <div class="plant-name">Cactus</div>
-                    <div class="plant-price">150 pts</div>
-                    <div class="plant-benefit">3 kg CO₂/year</div>
-                    <div class="plant-tag">Small</div>
+                
+                <div class="hud-section hud-points">
+                    <div class="hud-label">Available</div>
+                    <div class="hud-value hud-value-primary" id="forestPoints">0 pts</div>
                 </div>
             </div>
-            <div class="selected-plant" id="selectedPlantInfo" style="display: none;">
-                <span id="selectedPlantText">No plant selected</span>
-                <button onclick="clearSelection()">✖ Cancel</button>
-            </div>
-        </div>
 
-        <!-- 3D Garden Canvas -->
-        <div class="garden-3d-container">
-            <div class="garden-controls">
-                <button onclick="rotateGardenLeft()" class="control-btn">↶ Rotate Left</button>
-                <button onclick="rotateGardenRight()" class="control-btn">↷ Rotate Right</button>
-                <button onclick="resetCamera()" class="control-btn">🎥 Reset View</button>
-            </div>
-            <canvas id="gardenCanvas"></canvas>
-            <div class="garden-hint">
-                <p>🖱️ Click on the garden to plant • Drag to rotate • Scroll to zoom</p>
-            </div>
-        </div>
+            <!-- Main Forest View -->
+            <div class="forest-view">
+                <!-- Time of Day Controls -->
+                <div class="time-controls">
+                    <button class="time-btn" onclick="setTimeOfDay('dawn')" data-time="dawn">
+                        <span class="time-icon">🌅</span>
+                        <span class="time-label">Dawn</span>
+                    </button>
+                    <button class="time-btn active" onclick="setTimeOfDay('day')" data-time="day">
+                        <span class="time-icon">☀️</span>
+                        <span class="time-label">Day</span>
+                    </button>
+                    <button class="time-btn" onclick="setTimeOfDay('dusk')" data-time="dusk">
+                        <span class="time-icon">🌇</span>
+                        <span class="time-label">Dusk</span>
+                    </button>
+                    <button class="time-btn" onclick="setTimeOfDay('night')" data-time="night">
+                        <span class="time-icon">🌙</span>
+                        <span class="time-label">Night</span>
+                    </button>
+                </div>
 
-       
-        <div class="garden-actions">
-            <button onclick="clearGarden()" class="btn-danger">🗑️ Clear Garden</button>
-            <button onclick="shareGarden()" class="btn-secondary">📤 Share Garden</button>
+                <!-- Canvas Container -->
+                <div class="forest-canvas-wrapper">
+                    <canvas id="forestCanvas"></canvas>
+                    
+                    <!-- Particle overlays -->
+                    <canvas id="particleCanvas" class="particle-layer"></canvas>
+                    
+                    <!-- Forest Info Overlay -->
+                    <div class="forest-info" id="forestInfo" style="display: none;">
+                        <div class="forest-info-content">
+                            <div class="forest-info-title">🌲 Mature Forest</div>
+                            <div class="forest-info-desc">Your forest is thriving! Wildlife is starting to appear.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Controls -->
+                <div class="view-controls">
+                    <button class="view-btn" onclick="rotateForestLeft()" title="Rotate Left">
+                        <span>↶</span>
+                    </button>
+                    <button class="view-btn" onclick="resetForestView()" title="Reset View">
+                        <span>⊙</span>
+                    </button>
+                    <button class="view-btn" onclick="rotateForestRight()" title="Rotate Right">
+                        <span>↷</span>
+                    </button>
+                    <button class="view-btn" onclick="toggleParticles()" title="Toggle Effects" id="particleToggle">
+                        <span>✨</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Plant Selection Panel -->
+            <div class="plant-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">Plant Species</h3>
+                    <div class="panel-subtitle">Click to select, then click forest to plant</div>
+                </div>
+
+                <div class="species-grid">
+                    <div class="species-card" onclick="selectSpecies('oak')" data-species="oak">
+                        <div class="species-preview">
+                            <div class="species-tree oak-tree">
+                                <div class="tree-crown"></div>
+                                <div class="tree-trunk"></div>
+                            </div>
+                        </div>
+                        <div class="species-info">
+                            <div class="species-name">Oak Tree</div>
+                            <div class="species-stats">
+                                <span class="stat-impact">21 kg CO₂</span>
+                                <span class="stat-cost">500 pts</span>
+                            </div>
+                        </div>
+                        <div class="species-badge">Tall</div>
+                    </div>
+
+                    <div class="species-card" onclick="selectSpecies('pine')" data-species="pine">
+                        <div class="species-preview">
+                            <div class="species-tree pine-tree">
+                                <div class="tree-crown"></div>
+                                <div class="tree-trunk"></div>
+                            </div>
+                        </div>
+                        <div class="species-info">
+                            <div class="species-name">Pine Tree</div>
+                            <div class="species-stats">
+                                <span class="stat-impact">18 kg CO₂</span>
+                                <span class="stat-cost">400 pts</span>
+                            </div>
+                        </div>
+                        <div class="species-badge">Tall</div>
+                    </div>
+
+                    <div class="species-card" onclick="selectSpecies('birch')" data-species="birch">
+                        <div class="species-preview">
+                            <div class="species-tree birch-tree">
+                                <div class="tree-crown"></div>
+                                <div class="tree-trunk"></div>
+                            </div>
+                        </div>
+                        <div class="species-info">
+                            <div class="species-name">Birch Tree</div>
+                            <div class="species-stats">
+                                <span class="stat-impact">15 kg CO₂</span>
+                                <span class="stat-cost">350 pts</span>
+                            </div>
+                        </div>
+                        <div class="species-badge">Medium</div>
+                    </div>
+
+                    <div class="species-card" onclick="selectSpecies('maple')" data-species="maple">
+                        <div class="species-preview">
+                            <div class="species-tree maple-tree">
+                                <div class="tree-crown"></div>
+                                <div class="tree-trunk"></div>
+                            </div>
+                        </div>
+                        <div class="species-info">
+                            <div class="species-name">Maple Tree</div>
+                            <div class="species-stats">
+                                <span class="stat-impact">19 kg CO₂</span>
+                                <span class="stat-cost">450 pts</span>
+                            </div>
+                        </div>
+                        <div class="species-badge">Wide</div>
+                    </div>
+
+                    <div class="species-card" onclick="selectSpecies('willow')" data-species="willow">
+                        <div class="species-preview">
+                            <div class="species-tree willow-tree">
+                                <div class="tree-crown"></div>
+                                <div class="tree-trunk"></div>
+                            </div>
+                        </div>
+                        <div class="species-info">
+                            <div class="species-name">Willow Tree</div>
+                            <div class="species-stats">
+                                <span class="stat-impact">16 kg CO₂</span>
+                                <span class="stat-cost">380 pts</span>
+                            </div>
+                        </div>
+                        <div class="species-badge">Graceful</div>
+                    </div>
+
+                    <div class="species-card" onclick="selectSpecies('bush')" data-species="bush">
+                        <div class="species-preview">
+                            <div class="species-tree bush-plant">
+                                <div class="bush-crown"></div>
+                            </div>
+                        </div>
+                        <div class="species-info">
+                            <div class="species-name">Bush</div>
+                            <div class="species-stats">
+                                <span class="stat-impact">5 kg CO₂</span>
+                                <span class="stat-cost">200 pts</span>
+                            </div>
+                        </div>
+                        <div class="species-badge">Small</div>
+                    </div>
+
+                    <div class="species-card" onclick="selectSpecies('flower')" data-species="flower">
+                        <div class="species-preview">
+                            <div class="species-tree flower-plant">
+                                <div class="flower-bloom"></div>
+                                <div class="flower-stem"></div>
+                            </div>
+                        </div>
+                        <div class="species-info">
+                            <div class="species-name">Wildflower</div>
+                            <div class="species-stats">
+                                <span class="stat-impact">2 kg CO₂</span>
+                                <span class="stat-cost">100 pts</span>
+                            </div>
+                        </div>
+                        <div class="species-badge">Tiny</div>
+                    </div>
+
+                    <div class="species-card" onclick="selectSpecies('spruce')" data-species="spruce">
+                        <div class="species-preview">
+                            <div class="species-tree spruce-tree">
+                                <div class="tree-crown"></div>
+                                <div class="tree-trunk"></div>
+                            </div>
+                        </div>
+                        <div class="species-info">
+                            <div class="species-name">Spruce</div>
+                            <div class="species-stats">
+                                <span class="stat-impact">20 kg CO₂</span>
+                                <span class="stat-cost">480 pts</span>
+                            </div>
+                        </div>
+                        <div class="species-badge">Tall</div>
+                    </div>
+                </div>
+
+                <div class="selection-indicator" id="selectionIndicator" style="display: none;">
+                    <div class="indicator-content">
+                        <span class="indicator-icon">🌱</span>
+                        <span class="indicator-text" id="indicatorText">Oak Tree selected</span>
+                        <button class="indicator-clear" onclick="clearSpeciesSelection()">×</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forest Actions -->
+            <div class="forest-actions">
+                <button class="action-btn action-btn-secondary" onclick="shareForest()">
+                    <span class="action-icon">📤</span>
+                    <span>Share Forest</span>
+                </button>
+                <button class="action-btn action-btn-danger" onclick="clearForest()">
+                    <span class="action-icon">🗑️</span>
+                    <span>Clear Forest</span>
+                </button>
+            </div>
         </div>
     </div>
-</div>
 
+    <!-- PAGE 5: Eco Initiatives -->
+    <div id="page-initiatives" class="page">
+        <div class="initiatives-container">
+            <!-- Gradient Header Banner -->
+            <div class="initiatives-header-banner">
+                <h1>Eco Initiatives</h1>
+                <p class="subtitle">Join community-driven environmental actions in Astana</p>
+            </div>
 
+            <!-- Controls -->
+            <div class="initiatives-controls">
+                <div class="filter-group">
+                    <button class="initiative-filter active" data-filter="all" onclick="filterInitiatives('all')">
+                        <span class="filter-icon">📋</span>
+                        <span>All</span>
+                    </button>
+                    <button class="initiative-filter" data-filter="planting" onclick="filterInitiatives('planting')">
+                        <span class="filter-icon">🌱</span>
+                        <span>Tree Planting</span>
+                    </button>
+                    <button class="initiative-filter" data-filter="cleanup" onclick="filterInitiatives('cleanup')">
+                        <span class="filter-icon">🧹</span>
+                        <span>Cleanup</span>
+                    </button>
+                    <button class="initiative-filter" data-filter="recycling" onclick="filterInitiatives('recycling')">
+                        <span class="filter-icon">♻️</span>
+                        <span>Recycling</span>
+                    </button>
+                    <button class="initiative-filter" data-filter="education" onclick="filterInitiatives('education')">
+                        <span class="filter-icon">📚</span>
+                        <span>Education</span>
+                    </button>
+                    <button class="initiative-filter" data-filter="bookmarked" onclick="filterInitiatives('bookmarked')">
+                        <span class="filter-icon">🔖</span>
+                        <span>Saved</span>
+                    </button>
+                </div>
+
+                <button class="btn btn-primary" onclick="openCreateInitiative()" id="createInitiativeBtn">
+                    <span>Create Initiative</span>
+                    <span>+</span>
+                </button>
+            </div>
+
+            <!-- Search -->
+            <div class="initiatives-search">
+                <input type="text" id="initiativesSearch" class="search-input" placeholder="Search initiatives..." oninput="searchInitiatives()">
+                <span class="search-icon">🔍</span>
+            </div>
+
+            <!-- Initiatives Grid -->
+            <div class="initiatives-grid" id="initiativesGrid">
+                <!-- Cards will be populated by JavaScript -->
+            </div>
+
+            <!-- No results -->
+            <div class="no-results-message" id="noInitiatives" style="display: none;">
+                <div class="no-results-icon">🔍</div>
+                <div class="no-results-text">No initiatives found</div>
+                <div class="no-results-hint">Try adjusting your filters or search query</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 6: Leaderboard -->
     <div id="page-leaderboard" class="page">
+        <div class="page-header">
+            <h1 class="page-title">Leaderboard</h1>
+            <p class="page-subtitle">Top eco-warriors of Astana</p>
+        </div>
+        
         <div class="leaderboard-container">
-            <h1>🏆 Top Eco Warriors of Astana</h1>
             <div id="leaderboardList" class="leaderboard-list"></div>
         </div>
     </div>
 
-    
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>About EcoCity</h3>
+                <p>A unified platform for environmental initiatives and sustainable living in Astana, Kazakhstan.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📧 contact@ecocity.kz</p>
+                <p>📱 +7 (700) 123-4567</p>
+            </div>
+            <div class="footer-section">
+                <h3>Team</h3>
+                <p>Coffee Mugs Team</p>
+                <p>© 2026 All rights reserved.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>Made with 💚 by Coffee Mugs Team | EcoCity Platform</p>
+        </div>
+    </footer>
+
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal" style="display: none;">
+        <div class="modal-dialog modal-auth">
+            <div class="modal-header">
+                <h2 class="modal-title">Login</h2>
+                <button class="modal-close" onclick="closeLoginModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="loginError" class="auth-error" style="display: none;"></div>
+                <form class="modal-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" id="loginUsername" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="loginPassword" class="form-input" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Login</button>
+                    <div class="auth-switch">
+                        Don't have an account? <a href="#" onclick="openRegisterModal(); return false;">Register</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal-overlay" id="registerModal" style="display: none;">
+        <div class="modal-dialog modal-auth">
+            <div class="modal-header">
+                <h2 class="modal-title">Register</h2>
+                <button class="modal-close" onclick="closeRegisterModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="registerError" class="auth-error" style="display: none;"></div>
+                <form class="modal-form" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" id="registerUsername" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="registerPassword" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Role</label>
+                        <select id="registerRole" class="form-select" required>
+                            <option value="member">Member</option>
+                            <option value="organizer">Organizer</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Register</button>
+                    <div class="auth-switch">
+                        Already have an account? <a href="#" onclick="openLoginModal(); return false;">Login</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guest Notice -->
+    <div class="guest-notice" id="guestNotice" style="display: none;">
+        <div class="notice-content">
+            <div class="notice-icon">🔒</div>
+            <h3>Members Only</h3>
+            <p id="guestNoticeMessage">This feature is only available to registered members. Please login or register to continue.</p>
+            <div class="notice-actions">
+                <button class="btn btn-text" onclick="closeGuestNotice()">Cancel</button>
+                <button class="btn btn-primary" onclick="openLoginModal()">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Initiative Modal -->
+    <div class="modal-overlay" id="createInitiativeModal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 class="modal-title">Create New Initiative</h2>
+                <button class="modal-close" onclick="closeCreateInitiative()">&times;</button>
+            </div>
+            <form class="modal-form" onsubmit="submitInitiative(event)">
+                <div class="form-group">
+                    <label class="form-label">Initiative Type *</label>
+                    <select id="newInitiativeType" class="form-select" required>
+                        <option value="">Select type</option>
+                        <option value="planting">🌱 Tree Planting (100 points)</option>
+                        <option value="cleanup">🧹 Cleanup (50 points)</option>
+                        <option value="recycling">♻️ Recycling (30 points)</option>
+                        <option value="education">📚 Education (30 points)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Title *</label>
+                    <input type="text" id="newInitiativeTitle" class="form-input" required placeholder="Enter initiative title">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description *</label>
+                    <textarea id="newInitiativeDesc" class="form-textarea" rows="4" required placeholder="Describe your initiative"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Date *</label>
+                        <input type="date" id="newInitiativeDate" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Time *</label>
+                        <input type="time" id="newInitiativeTime" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Location *</label>
+                    <input type="text" id="newInitiativeLocation" class="form-input" required placeholder="Address or location">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Contact *</label>
+                    <input type="text" id="newInitiativeContact" class="form-input" required placeholder="Email or phone">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Volunteers Needed *</label>
+                    <input type="number" id="newInitiativeVolunteers" class="form-input" min="1" required placeholder="Number of volunteers">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateInitiative()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Initiative</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+ 
+    <div class="modal-overlay" id="initiativeDetailsModal" style="display: none;">
+        <div class="modal-dialog modal-wide">
+            <div class="modal-header">
+                <h2 class="modal-title" id="detailsInitiativeTitle"></h2>
+                <button class="modal-close" onclick="closeInitiativeDetails()">&times;</button>
+            </div>
+            <div class="modal-body" id="initiativeDetailsContent">
+               
+            </div>
+        </div>
+    </div>
+
+ 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-   
     <script src="script.js"></script>
 </body>
 </html>
