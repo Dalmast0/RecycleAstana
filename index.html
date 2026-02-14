@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCity - Green Urban Platform</title>
+    
+    <!-- Leaflet CSS for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Our custom styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-brand">🌱 EcoCity</div>
+        <div class="nav-menu">
+            <a href="#" onclick="showPage('map')" class="nav-link active">Map</a>
+            <a href="#" onclick="showPage('dashboard')" class="nav-link">Dashboard</a>
+            <a href="#" onclick="showPage('scanner')" class="nav-link">Scanner</a>
+            <a href="#" onclick="showPage('leaderboard')" class="nav-link">Leaderboard</a>
+        </div>
+        <div class="user-info">
+            <span id="userPoints">0 points</span>
+            <span id="userLevel">Level 1</span>
+        </div>
+    </nav>
+
+    <!-- PAGE 1: Map with Recycling Points -->
+    <div id="page-map" class="page active">
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterMap('all')">All</button>
+            <button class="filter-btn" onclick="filterMap('plastic')">🧴 Plastic</button>
+            <button class="filter-btn" onclick="filterMap('glass')">🍾 Glass</button>
+            <button class="filter-btn" onclick="filterMap('paper')">📄 Paper</button>
+            <button class="filter-btn" onclick="filterMap('metal')">🥫 Metal</button>
+            <button class="filter-btn" onclick="filterMap('batteries')">🔋 Batteries</button>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <!-- PAGE 2: User Dashboard -->
+    <div id="page-dashboard" class="page">
+        <div class="dashboard">
+            <h1>Your Eco Impact 🌍</h1>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-value" id="totalPoints">0</div>
+                    <div class="stat-label">Eco Points</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">♻️</div>
+                    <div class="stat-value" id="totalRecycled">0 kg</div>
+                    <div class="stat-label">Total Recycled</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🌳</div>
+                    <div class="stat-value" id="co2Saved">0 kg</div>
+                    <div class="stat-label">CO₂ Saved</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value" id="userRank">#1</div>
+                    <div class="stat-label">City Rank</div>
+                </div>
+            </div>
+
+            <div class="achievements">
+                <h2>🏅 Your Achievements</h2>
+                <div class="achievement-list" id="achievementList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 3: Recycling Scanner/Logger -->
+    <div id="page-scanner" class="page">
+        <div class="scanner-container">
+            <h1>♻️ Log Your Recycling</h1>
+            
+            <div class="scanner-input">
+                <label for="itemType">What did you recycle?</label>
+                <select id="itemType" class="item-select">
+                    <option value="">-- Select item type --</option>
+                    <option value="plastic">🧴 Plastic Bottle/Container</option>
+                    <option value="glass">🍾 Glass Bottle/Jar</option>
+                    <option value="paper">📄 Paper/Cardboard</option>
+                    <option value="metal">🥫 Metal Can/Container</option>
+                    <option value="batteries">🔋 Battery</option>
+                </select>
+                
+                <label for="itemWeight">Weight (kg)</label>
+                <input type="number" id="itemWeight" class="weight-input" placeholder="0.5" step="0.1" min="0.1">
+                
+                <button onclick="logRecycling()" class="btn-primary">Log Recycling Activity</button>
+            </div>
+
+            <div id="scanResult" class="scan-result" style="display: none;">
+                <h2>Great job! 🎉</h2>
+                <p id="pointsEarned"></p>
+                <p id="impactMessage"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 4: Leaderboard -->
+    <div id="page-leaderboard" class="page">
+        <div class="leaderboard-container">
+            <h1>🏆 Top Eco Warriors of Astana</h1>
+            <div id="leaderboardList" class="leaderboard-list"></div>
+        </div>
+    </div>
+
+    <!-- Leaflet JavaScript for maps -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Our custom JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,373 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f5f5f5;
+}
+
+/* Navigation Bar */
+.navbar {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.nav-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.nav-link:hover, .nav-link.active {
+    background: rgba(255,255,255,0.2);
+}
+
+.user-info {
+    color: white;
+    display: flex;
+    gap: 1rem;
+    font-weight: 600;
+}
+
+/* Page Container */
+.page {
+    display: none;
+    padding: 2rem;
+    min-height: calc(100vh - 80px);
+}
+
+.page.active {
+    display: block;
+}
+
+/* Map Styles */
+#map {
+    height: 600px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-top: 1rem;
+}
+
+.filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.filter-btn {
+    padding: 0.7rem 1.2rem;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+}
+
+.filter-btn:hover {
+    border-color: #28a745;
+    transform: translateY(-2px);
+}
+
+.filter-btn.active {
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+/* Dashboard Styles */
+.dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.dashboard h1 {
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #28a745;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 1rem;
+}
+
+.achievements {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.achievements h2 {
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.achievement-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.achievement-item {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 8px;
+    text-align: center;
+    border: 2px solid transparent;
+}
+
+.achievement-item.earned {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border-color: #28a745;
+}
+
+.achievement-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.achievement-name {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0.3rem;
+}
+
+.achievement-desc {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Scanner/Logger Styles */
+.scanner-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.scanner-container h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+.scanner-input {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.scanner-input label {
+    font-weight: 600;
+    color: #333;
+    margin-top: 1rem;
+}
+
+.item-select, .weight-input {
+    padding: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.item-select:focus, .weight-input:focus {
+    outline: none;
+    border-color: #28a745;
+}
+
+.btn-primary {
+    padding: 1rem 2rem;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: all 0.3s;
+}
+
+.btn-primary:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.scan-result {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.scan-result h2 {
+    color: #155724;
+    margin-bottom: 1rem;
+}
+
+.scan-result p {
+    font-size: 1.1rem;
+    color: #155724;
+    margin: 0.5rem 0;
+}
+
+/* Leaderboard Styles */
+.leaderboard-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.leaderboard-container h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+.leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.leaderboard-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.leaderboard-item.top3 {
+    background: linear-gradient(135deg, #fff3cd, #ffeeba);
+    border: 2px solid #ffc107;
+}
+
+.leaderboard-rank {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #666;
+    min-width: 60px;
+}
+
+.leaderboard-item.top3 .leaderboard-rank {
+    color: #ff6b6b;
+}
+
+.leaderboard-info {
+    flex: 1;
+    margin-left: 1rem;
+}
+
+.leaderboard-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.leaderboard-stats {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.leaderboard-points {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #28a745;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .nav-menu {
+        gap: 0.5rem;
+    }
+    
+    .nav-link {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    #map {
+        height: 400px;
+    }
+    
+    .scanner-container {
+        padding: 1.5rem;
+    }
+}
