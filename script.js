@@ -1,4 +1,4 @@
-// ==================== DATA ====================
+
 // User data (fake database)
 let userData = {
     points: 0,
@@ -263,7 +263,183 @@ function updateNavDisplay() {
     document.getElementById('userPoints').textContent = `${userData.points} points`;
     document.getElementById('userLevel').textContent = `Level ${userData.level}`;
 }
+let gardenData = {
+    plots: Array(64).fill(null), // 8x8 grid
+    selectedPlant: null,
+    totalCO2: 0
+};
 
+// Load garden from localStorage
+function loadGarden() {
+    const saved = localStorage.getItem('ecocity_garden');
+    if (saved) {
+        gardenData = JSON.parse(saved);
+    }
+    renderGarden();
+}
+
+// Save garden to localStorage
+function saveGarden() {
+    localStorage.setItem('ecocity_garden', JSON.stringify(gardenData));
+}
+
+// Initialize garden grid
+function initGarden() {
+    const grid = document.getElementById('gardenGrid');
+    grid.innerHTML = '';
+    
+    for (let i = 0; i < 64; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'garden-cell empty';
+        cell.dataset.index = i;
+        cell.onclick = () => plantInCell(i);
+        grid.appendChild(cell);
+    }
+    
+    loadGarden();
+    updateGardenStats();
+}
+
+// Render garden state
+function renderGarden() {
+    gardenData.plots.forEach((plant, index) => {
+        const cell = document.querySelector(`[data-index="${index}"]`);
+        if (plant) {
+            cell.className = 'garden-cell planted';
+            cell.innerHTML = `
+                ${plant.icon}
+                <button class="remove-btn" onclick="removePlant(${index}, event)">×</button>
+            `;
+        } else {
+            cell.className = 'garden-cell empty';
+            cell.innerHTML = '';
+        }
+    });
+}
+
+
+function buyPlant(type, cost, icon, co2) {
+    if (userData.points < cost) {
+        alert(`❌ Not enough points! You need ${cost} points, but have ${userData.points}`);
+        return;
+    }
+    
+    gardenData.selectedPlant = { type, cost, icon, co2 };
+    alert(`✅ ${icon} selected! Click on empty spot in garden to plant.`);
+}
+
+// Plant in cell
+function plantInCell(index) {
+    if (!gardenData.selectedPlant) {
+        alert('💡 Select a plant from the shop first!');
+        return;
+    }
+    
+    if (gardenData.plots[index]) {
+        alert('⚠️ This spot is already planted!');
+        return;
+    }
+    
+    const plant = gardenData.selectedPlant;
+    
+    // Deduct points
+    userData.points -= plant.cost;
+    
+    // Plant it
+    gardenData.plots[index] = plant;
+    gardenData.totalCO2 += plant.co2;
+    
+    // Update UI
+    renderGarden();
+    updateGardenStats();
+    updateNavDisplay();
+    saveGarden();
+    
+    // Clear selection
+    gardenData.selectedPlant = null;
+    
+    // Show success
+    const cell = document.querySelector(`[data-index="${index}"]`);
+    cell.style.animation = 'growPlant 0.5s ease-out';
+}
+
+// Remove plant from cell
+function removePlant(index, event) {
+    event.stopPropagation(); // Prevent cell click
+    
+    if (!confirm('🗑️ Remove this plant? You won\'t get points back.')) {
+        return;
+    }
+    
+    const plant = gardenData.plots[index];
+    if (plant) {
+        gardenData.totalCO2 -= plant.co2;
+        gardenData.plots[index] = null;
+        
+        renderGarden();
+        updateGardenStats();
+        saveGarden();
+    }
+}
+
+// Update garden statistics
+function updateGardenStats() {
+    document.getElementById('gardenPoints').textContent = userData.points;
+    
+    const plantCount = gardenData.plots.filter(p => p !== null).length;
+    document.getElementById('totalPlants').textContent = plantCount;
+    
+    document.getElementById('gardenCO2').textContent = `${gardenData.totalCO2} kg/year`;
+}
+
+// Clear entire garden
+function clearGarden() {
+    if (!confirm('🗑️ Clear entire garden? This cannot be undone!')) {
+        return;
+    }
+    
+    gardenData.plots = Array(64).fill(null);
+    gardenData.totalCO2 = 0;
+    
+    renderGarden();
+    updateGardenStats();
+    saveGarden();
+    
+    alert('✅ Garden cleared!');
+}
+
+// Share garden
+function shareGarden() {
+    const plantCount = gardenData.plots.filter(p => p !== null).length;
+    const message = `🌳 My EcoCity Garden:\n${plantCount} plants planted\n${gardenData.totalCO2} kg CO₂ absorbed per year!\n\nJoin me in making the planet greener! 🌍`;
+    
+    // Try to use Web Share API
+    if (navigator.share) {
+        navigator.share({
+            title: 'My Eco Garden',
+            text: message
+        });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(message).then(() => {
+            alert('📋 Garden stats copied to clipboard!');
+        });
+    }
+}
+
+// Update showPage function to handle garden
+const originalShowPage = showPage;
+showPage = function(pageName) {
+    originalShowPage(pageName);
+    
+    if (pageName === 'garden') {
+        if (!document.getElementById('gardenGrid').hasChildNodes()) {
+            initGarden();
+        } else {
+            updateGardenStats();
+        }
+    }
+};
 // ==================== INIT ====================
 window.onload = function() {
     initMap();
