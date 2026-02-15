@@ -2,89 +2,184 @@
 
 let currentUser = null;
 let users = JSON.parse(localStorage.getItem('ecocity_users') || '[]');
+function normalizeContact(raw) {
+    const v = String(raw || '').trim().toLowerCase();
+    if (!v) return '';
+    if (v.includes('@')) return v;           // email
+    return v.replace(/[^\d+]/g, '');         // phone: keep digits and +
+}
+
+function getCurrentDisplayName() {
+    if (!currentUser) return 'You';
+    const fullName = `${currentUser.name || ''} ${currentUser.surname || ''}`.trim();
+    return fullName || currentUser.contact || 'You';
+}
+
+// Seed 2 demo accounts so you can show both roles without a backend
+function seedDemoUsersIfEmpty() {
+    if (!Array.isArray(users)) users = [];
+    if (users.length > 0) return;
+
+    users = [
+        {
+            contact: normalizeContact('judge@example.com'),
+            name: 'Judge',
+            surname: 'Account',
+            password: 'judge1234',
+            role: 'member',
+            points: 0,
+            level: 1,
+            recycled_kg: 0,
+            co2_saved: 0
+        },
+        {
+            contact: normalizeContact('organizer@ecocity.kz'),
+            name: 'Eco',
+            surname: 'Organizer',
+            password: 'organizer123',
+            role: 'organizer',
+            points: 0,
+            level: 1,
+            recycled_kg: 0,
+            co2_saved: 0
+        }
+    ];
+
+    localStorage.setItem('ecocity_users', JSON.stringify(users));
+}
 
 function initAuth() {
+    // reload + seed demo users (no backend)
+    users = JSON.parse(localStorage.getItem('ecocity_users') || '[]');
+    seedDemoUsersIfEmpty();
+
     const savedUser = localStorage.getItem('ecocity_current_user');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
+
+        // normalize contact if present
+        if (currentUser.contact) currentUser.contact = normalizeContact(currentUser.contact);
+
+        // sync stats from saved user into userData
+        userData.points = currentUser.points || 0;
+        userData.level = currentUser.level || 1;
+        userData.recycled_kg = currentUser.recycled_kg || 0;
+        userData.co2_saved = currentUser.co2_saved || 0;
+
         updateAuthUI();
     }
+
     updateNavAccess();
 }
 
+
 function handleLogin(event) {
     event.preventDefault();
-    const username = document.getElementById('loginUsername').value;
+
+    const contact = normalizeContact(document.getElementById('loginContact').value);
     const password = document.getElementById('loginPassword').value;
-    
-    const user = users.find(u => u.username === username && u.password === password);
-    
+
+    const user = users.find(u => normalizeContact(u.contact) === contact && u.password === password);
+
     if (user) {
         currentUser = {
-            username: user.username,
-            role: user.role,
+            contact: normalizeContact(user.contact),
+            name: user.name || '',
+            surname: user.surname || '',
+            role: user.role || 'member',
             points: user.points || 0,
             level: user.level || 1,
             recycled_kg: user.recycled_kg || 0,
             co2_saved: user.co2_saved || 0
         };
-        
+
         localStorage.setItem('ecocity_current_user', JSON.stringify(currentUser));
+
         userData.points = currentUser.points;
         userData.level = currentUser.level;
         userData.recycled_kg = currentUser.recycled_kg;
         userData.co2_saved = currentUser.co2_saved;
-        
+
         closeLoginModal();
         updateAuthUI();
         updateNavAccess();
         location.reload();
     } else {
-        document.getElementById('loginError').textContent = 'Invalid username or password';
+        document.getElementById('loginError').textContent = 'Invalid phone/email or password';
         document.getElementById('loginError').style.display = 'block';
     }
 }
 
+
 function handleRegister(event) {
     event.preventDefault();
-    const username = document.getElementById('registerUsername').value;
-    const password = document.getElementById('registerPassword').value;
-    const role = document.getElementById('registerRole').value;
-    
-    if (users.find(u => u.username === username)) {
-        document.getElementById('registerError').textContent = 'Username already exists';
+
+    const name = document.getElementById('registerName').value.trim();
+    const surname = document.getElementById('registerSurname').value.trim();
+    const contact = normalizeContact(document.getElementById('registerContact').value);
+    const pass1 = document.getElementById('registerPassword1').value;
+    const pass2 = document.getElementById('registerPassword2').value;
+
+    if (!name || !surname) {
+        document.getElementById('registerError').textContent = 'Name and surname are required';
         document.getElementById('registerError').style.display = 'block';
         return;
     }
-    
+    if (!contact) {
+        document.getElementById('registerError').textContent = 'Phone or email is required';
+        document.getElementById('registerError').style.display = 'block';
+        return;
+    }
+    if (pass1.length < 6) {
+        document.getElementById('registerError').textContent = 'Password must be at least 6 characters';
+        document.getElementById('registerError').style.display = 'block';
+        return;
+    }
+    if (pass1 !== pass2) {
+        document.getElementById('registerError').textContent = 'Passwords do not match';
+        document.getElementById('registerError').style.display = 'block';
+        return;
+    }
+
+    if (users.find(u => normalizeContact(u.contact) === contact)) {
+        document.getElementById('registerError').textContent = 'This phone/email is already registered';
+        document.getElementById('registerError').style.display = 'block';
+        return;
+    }
+
     const newUser = {
-        username,
-        password,
-        role,
+        contact,
+        name,
+        surname,
+        password: pass1, // demo only
+        role: 'member',
         points: 0,
         level: 1,
         recycled_kg: 0,
         co2_saved: 0
     };
-    
+
     users.push(newUser);
     localStorage.setItem('ecocity_users', JSON.stringify(users));
-    
+
     currentUser = {
-        username: newUser.username,
+        contact: newUser.contact,
+        name: newUser.name,
+        surname: newUser.surname,
         role: newUser.role,
         points: 0,
         level: 1,
         recycled_kg: 0,
         co2_saved: 0
     };
-    
+
     localStorage.setItem('ecocity_current_user', JSON.stringify(currentUser));
+
     userData.points = 0;
     userData.level = 1;
     userData.recycled_kg = 0;
     userData.co2_saved = 0;
-    
+
     closeRegisterModal();
     updateAuthUI();
     updateNavAccess();
@@ -93,7 +188,9 @@ function handleRegister(event) {
 function handleLogout() {
     if (confirm('Are you sure you want to logout?')) {
         if (currentUser) {
-            const userIndex = users.findIndex(u => u.username === currentUser.username);
+            const userIndex = users.findIndex(
+                u => normalizeContact(u.contact) === normalizeContact(currentUser.contact)
+            );
             if (userIndex !== -1) {
                 users[userIndex].points = userData.points;
                 users[userIndex].level = userData.level;
@@ -102,10 +199,10 @@ function handleLogout() {
                 localStorage.setItem('ecocity_users', JSON.stringify(users));
             }
         }
-        
+
         currentUser = null;
         localStorage.removeItem('ecocity_current_user');
-        
+
         userData = {
             points: 0,
             level: 1,
@@ -113,7 +210,7 @@ function handleLogout() {
             co2_saved: 0,
             rank: 1
         };
-        
+
         updateAuthUI();
         updateNavAccess();
         showPage('map');
@@ -123,18 +220,24 @@ function handleLogout() {
 function updateAuthUI() {
     const authButtons = document.getElementById('authButtons');
     const userProfile = document.getElementById('userProfile');
-    
+
     if (currentUser) {
         authButtons.style.display = 'none';
         userProfile.style.display = 'flex';
-        document.getElementById('userName').textContent = currentUser.username;
-        document.getElementById('userRoleBadge').textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+
+        const displayName = `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() || currentUser.contact;
+        document.getElementById('userName').textContent = displayName;
+
+        document.getElementById('userRoleBadge').textContent =
+            currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+
         updateNavDisplay();
     } else {
         authButtons.style.display = 'flex';
         userProfile.style.display = 'none';
     }
 }
+
 
 function updateNavAccess() {
     const navDashboard = document.getElementById('navDashboard');
@@ -187,9 +290,10 @@ function openLoginModal() {
 
 function closeLoginModal() {
     document.getElementById('loginModal').style.display = 'none';
-    document.getElementById('loginUsername').value = '';
+    document.getElementById('loginContact').value = '';
     document.getElementById('loginPassword').value = '';
 }
+
 
 function openRegisterModal() {
     closeGuestNotice();
@@ -200,9 +304,13 @@ function openRegisterModal() {
 
 function closeRegisterModal() {
     document.getElementById('registerModal').style.display = 'none';
-    document.getElementById('registerUsername').value = '';
-    document.getElementById('registerPassword').value = '';
+    document.getElementById('registerName').value = '';
+    document.getElementById('registerSurname').value = '';
+    document.getElementById('registerContact').value = '';
+    document.getElementById('registerPassword1').value = '';
+    document.getElementById('registerPassword2').value = '';
 }
+
 
 function toggleUserDropdown() {
     const dropdown = document.getElementById('userDropdown');
@@ -473,7 +581,7 @@ function logRecycling() {
     if (itemType === 'paper' || itemType === 'plastic') {
         updateQuestProgress('weight', itemType, weight);
     }
-    const userIndex = users.findIndex(u => u.username === currentUser.username);
+     const userIndex = users.findIndex(u => normalizeContact(u.contact) === normalizeContact(currentUser.contact));
     if (userIndex !== -1) {
         users[userIndex].points = userData.points;
         users[userIndex].level = userData.level;
@@ -552,7 +660,7 @@ function updateLeaderboard() {
     
     leaderboardData.forEach((user, index) => {
         const div = document.createElement('div');
-        const isCurrentUser = currentUser && user.name === currentUser.username;
+        const isCurrentUser = currentUser && user.name === "You";
         div.className = `leaderboard-item ${index < 3 ? 'top3' : ''} ${isCurrentUser ? 'current-user' : ''}`;
         
         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
@@ -560,7 +668,7 @@ function updateLeaderboard() {
         div.innerHTML = `
             <div class="leaderboard-rank">${medal || `#${index + 1}`}</div>
             <div class="leaderboard-info">
-                <div class="leaderboard-name">${isCurrentUser ? currentUser.username : user.name}</div>
+                <div class="leaderboard-name">${isCurrentUser ? getCurrentDisplayName() : user.name}</div>
                 <div class="leaderboard-stats">${user.recycled.toFixed(1)} kg recycled</div>
             </div>
             <div class="leaderboard-points">${user.points} pts</div>
@@ -1203,7 +1311,7 @@ function completeQuest(questId) {
         currentUser.points = userData.points;
         localStorage.setItem('ecocity_current_user', JSON.stringify(currentUser));
         
-        const userIndex = users.findIndex(u => u.username === currentUser.username);
+        const userIndex = users.findIndex(u => normalizeContact(u.contact) === normalizeContact(currentUser.contact));
         if (userIndex !== -1) {
             users[userIndex].points = userData.points;
             localStorage.setItem('ecocity_users', JSON.stringify(users));
@@ -1443,7 +1551,7 @@ function plantTree(x, y) {
         currentUser.points = userData.points;
         localStorage.setItem('ecocity_current_user', JSON.stringify(currentUser));
         
-        const userIndex = users.findIndex(u => u.username === currentUser.username);
+       const userIndex = users.findIndex(u => normalizeContact(u.contact) === normalizeContact(currentUser.contact));
         if (userIndex !== -1) {
             users[userIndex].points = userData.points;
             localStorage.setItem('ecocity_users', JSON.stringify(users));
@@ -1503,13 +1611,13 @@ function saveForest() {
         })),
         timeOfDay: forest.timeOfDay
     };
-    localStorage.setItem(`ecocity_forest_${currentUser.username}`, JSON.stringify(data));
+    localStorage.setItem(`ecocity_forest_${currentUser.contact}`, JSON.stringify(data));
 }
 
 function loadForest() {
     if (!currentUser) return;
     
-    const saved = localStorage.getItem(`ecocity_forest_${currentUser.username}`);
+    const saved = localStorage.getItem(`ecocity_forest_${currentUser.contact}`);
     if (saved) {
         const data = JSON.parse(saved);
         forest.trees = data.trees.map(t => {
@@ -1733,7 +1841,8 @@ function renderInitiatives() {
         const isBookmarked = bookmarkedInitiatives.includes(initiative.id);
         const isJoined = joinedInitiatives.includes(initiative.id);
         const isFull = initiative.volunteersRegistered >= initiative.volunteersNeeded;
-        const isCreator = currentUser && initiative.createdBy === currentUser.username;
+        const isCreator = currentUser && initiative.createdBy === currentUser.contact;
+
         
         const typeIcons = {
             planting: '🌱',
@@ -1839,8 +1948,7 @@ function joinInitiative(id) {
     
     const initiative = initiatives.find(i => i.id === id);
     if (!initiative) return;
-    
-    if (initiative.createdBy === currentUser.username) {
+if (initiative.createdBy === currentUser.contact) {
         alert('You cannot join your own initiative!');
         return;
     }
@@ -1909,8 +2017,8 @@ function viewInitiativeDetails(id) {
     const progress = (initiative.volunteersRegistered / initiative.volunteersNeeded) * 100;
     const isJoined = joinedInitiatives.includes(initiative.id);
     const isFull = initiative.volunteersRegistered >= initiative.volunteersNeeded;
-    const isCreator = currentUser && initiative.createdBy === currentUser.username;
-    
+    const isCreator = currentUser && initiative.createdBy === currentUser.contact;
+
     title.textContent = initiative.title;
     
     content.innerHTML = `
@@ -2033,13 +2141,13 @@ function submitInitiative(event) {
         date: document.getElementById('newInitiativeDate').value,
         time: document.getElementById('newInitiativeTime').value,
         location: document.getElementById('newInitiativeLocation').value,
-        organizer: currentUser.username,
+       organizer: getCurrentDisplayName(),
         contact: document.getElementById('newInitiativeContact').value,
         volunteersNeeded: parseInt(document.getElementById('newInitiativeVolunteers').value),
         volunteersRegistered: 0,
         bonusPoints: bonusMap[typeSelect] || 30,
         registeredUsers: [],
-        createdBy: currentUser.username
+        createdBy: currentUser.contact
     };
     
     initiatives.unshift(newInitiative);
@@ -2048,3 +2156,4 @@ function submitInitiative(event) {
     
     alert('Initiative created successfully!');
 }
+
