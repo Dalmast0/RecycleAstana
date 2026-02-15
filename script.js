@@ -232,63 +232,507 @@ let userData = {
 const recyclingPoints = [
   {
     id: 1,
-    name: "LS Astana (main branch)",
-    address: "Telzhan Shonanuły 36A",
-    lat: 51.15,
-    lon: 71.42,
-    types: ["plastic", "paper", "glass", "metal"],
-    hours: "09:00-20:00 (Mon-Sun)",
-    notes: "Multiple branches in Astana; they pay for recyclables. Popular chain."
+    name: "Пункт приема металла",
+    address: "ул. Кордай, 88",
+    lat: 51.0882,
+    lon: 71.3945,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Popular metal scrap point; very high rating and many reviews on 2GIS."
   },
   {
     id: 2,
-    name: "LS Astana (Manasa branch)",
-    address: "Manasa 11/4",
-    lat: 51.14,
-    lon: 71.43,
-    types: ["plastic", "paper", "cardboard", "metal"],
-    hours: "09:00-20:00",
-    notes: "One of the LS Ecolife collection points"
+    name: "Дарын Металс",
+    address: "ул. Сакен Жунисов, 78а",
+    lat: 51.1452,
+    lon: 71.4888,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "High-rated metal buyer; accepts black and non-ferrous metals."
   },
   {
     id: 3,
-    name: "Ecomaf",
-    address: "Kimasar 1",
-    lat: 51.13,
-    lon: 71.45,
-    types: ["plastic", "paper", "glass", "metal"],
-    hours: "Check locally",
-    notes: "Focus on secondary raw materials"
+    name: "МеталлоЗакуп",
+    address: "ул. Жанажол, 19Б",
+    lat: 51.1722,
+    lon: 71.4235,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Metal reception point; mid-range rating."
   },
   {
     id: 4,
-    name: "KALEKE",
-    address: "Talapkerskaya 14a",
-    lat: 51.17,
-    lon: 71.40,
-    types: ["paper", "plastic", "metal"],
-    hours: "Standard business hours",
-    notes: "High quality recycling service"
+    name: "Пункт приема металла",
+    address: "ул. Шарбакты, 12/3г",
+    lat: 51.1125,
+    lon: 71.3678,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Excellent rating; local scrap yard."
   },
   {
     id: 5,
-    name: "Eco Point",
-    address: "Rakhimzhana Koshkarbayeva 44",
-    lat: 51.18,
-    lon: 71.41,
-    types: ["plastic", "glass", "paper"],
-    hours: "Varies, often daytime",
-    notes: "Common residential area location"
+    name: "Мир металла",
+    address: "ул. Шарбакты, 17",
+    lat: 51.1128,
+    lon: 71.3685,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Good-rated metal collection nearby other Шарбакты points."
   },
   {
     id: 6,
-    name: "Green Station",
-    address: "Kravtsova 2/2, Baikonur district",
-    lat: 51.14,
-    lon: 71.50,
-    types: ["paper", "plastic", "glass", "metal"],
-    hours: "Daytime collection",
-    notes: "Part of Astana Clean Time initiatives"
+    name: "Пункт приема металла",
+    address: "ул. Орхон, 2",
+    lat: 51.0995,
+    lon: 71.3812,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Standard metal scrap acceptance."
+  },
+  {
+    id: 7,
+    name: "Пункт приема металла",
+    address: "ул. Фахд бен Абдул Азиз, 30",
+    lat: 51.1856,
+    lon: 71.4125,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Metal reception; solid rating."
+  },
+  {
+    id: 8,
+    name: "Пункт приема металла",
+    address: "ул. Караменде би Шакаулы, 12",
+    lat: 51.1235,
+    lon: 71.3856,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "High-rated local point."
+  },
+  {
+    id: 9,
+    name: "Пункт приема металла",
+    address: "ул. Озбекали Жанибек, 1",
+    lat: 51.1658,
+    lon: 71.3892,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Perfect rating in data."
+  },
+  {
+    id: 10,
+    name: "Пункт приема металла",
+    address: "ул. Сакен Жунисов, 74а",
+    lat: 51.1448,
+    lon: 71.4882,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Close to Дарын Металс; good rating."
+  },
+  {
+    id: 11,
+    name: "Пункт приема металла",
+    address: "ул. Ушкопир, 3",
+    lat: 51.1756,
+    lon: 71.3945,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "High-rated metal scrap."
+  },
+  {
+    id: 12,
+    name: "Пункт приема металла",
+    address: "ул. Балкантау, 6",
+    lat: 51.1045,
+    lon: 71.3725,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Local metal collection point."
+  },
+  {
+    id: 13,
+    name: "Пункт приема металла",
+    address: "ул. Озбекали Жанибек, 19",
+    lat: 51.1672,
+    lon: 71.3905,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Lower rating; check on-site."
+  },
+  {
+    id: 14,
+    name: "Пункт приема металла",
+    address: "ул. Шарбакты, 1",
+    lat: 51.1118,
+    lon: 71.3665,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Perfect rating; in Шарбакты cluster."
+  },
+  {
+    id: 15,
+    name: "Максат",
+    address: "ул. Сакен Жунисов, 78",
+    lat: 51.1454,
+    lon: 71.4890,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Metal buyer near Дарын; good rating."
+  },
+  {
+    id: 16,
+    name: "Пункт приема металла",
+    address: "ул. Мустафа Шокай, 103/1",
+    lat: 51.1892,
+    lon: 71.4356,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "High-rated point."
+  },
+  {
+    id: 17,
+    name: "КазМетКор",
+    address: "ул. Ушконыр, 1/2",
+    lat: 51.1752,
+    lon: 71.3952,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Perfect rating; metal scrap yard."
+  },
+  {
+    id: 18,
+    name: "Пункт приема металла",
+    address: "ул. Мустафа Шокай, 2/2",
+    lat: 51.1788,
+    lon: 71.4298,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Good-rated metal reception."
+  },
+
+  // Paper/plastic/glass points
+  {
+    id: 19,
+    name: "AstanaQagazy",
+    address: "ул. Машхур Жусип Копейулы, 11/1",
+    lat: 51.1585,
+    lon: 71.4112,
+    types: ["paper"],
+    hours: "09:00-18:00",
+    notes: "Paper-focused collection."
+  },
+  {
+    id: 20,
+    name: "Адал Кагазы",
+    address: "пр. Абая, 99",
+    lat: 51.1456,
+    lon: 71.4625,
+    types: ["paper"],
+    hours: "09:00-18:00",
+    notes: "Paper recycling point."
+  },
+  {
+    id: 21,
+    name: "LS Astana (Телжан Шонанулы branch)",
+    address: "ул. Телжан Шонанулы, 36/1а",
+    lat: 51.1142,
+    lon: 71.3845,
+    types: ["paper", "plastic", "glass"],
+    hours: "09:00-18:00",
+    notes: "Main LS Ecolife branch; accepts sorted recyclables; pay possible."
+  },
+  {
+    id: 22,
+    name: "LS Astana (Сарыарка branch)",
+    address: "пр. Сарыарка, 31/1а",
+    lat: 51.1682,
+    lon: 71.4045,
+    types: ["paper", "plastic", "glass"],
+    hours: "09:00-18:00",
+    notes: "LS chain point; good for paper/plastic/glass."
+  },
+  {
+    id: 23,
+    name: "LS Astana (Манас branch)",
+    address: "ул. Манас, 11/4",
+    lat: 51.1625,
+    lon: 71.4165,
+    types: ["paper", "plastic", "glass"],
+    hours: "09:00-18:00",
+    notes: "Popular LS Ecolife location; mid-high rating."
+  },
+  {
+    id: 24,
+    name: "LS Astana (Габидена Мустафина branch)",
+    address: "ул. Габидена Мустафина, 17/1",
+    lat: 51.1234,
+    lon: 71.4562,
+    types: ["paper", "plastic", "glass"],
+    hours: "09:00-18:00",
+    notes: "Multi-type LS collection point."
+  },
+
+  // Likekomek charity containers (often for clothes, but listed with plastic/paper)
+  {
+    id: 25,
+    name: "Likekomek",
+    address: "ул. Дулата Бабатайулы, 4а",
+    lat: 51.1385,
+    lon: 71.4285,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "Charity container; 24/7 access; high rating."
+  },
+  {
+    id: 26,
+    name: "Likekomek",
+    address: "пр. Республики, 34/1",
+    lat: 51.1542,
+    lon: 71.4678,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "Charity box for recyclables/clothes."
+  },
+  {
+    id: 27,
+    name: "Likekomek",
+    address: "ул. Аманжол Болекпаев, 19",
+    lat: 51.1712,
+    lon: 71.4456,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "24/7 charity container."
+  },
+  {
+    id: 28,
+    name: "Likekomek",
+    address: "ул. Ахмет Байтурсынулы, 31",
+    lat: 51.1298,
+    lon: 71.4125,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "High-rated charity point."
+  },
+  {
+    id: 29,
+    name: "Likekomek",
+    address: "пр. Туран, 55а",
+    lat: 51.1156,
+    lon: 71.4345,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "Charity container."
+  },
+  {
+    id: 30,
+    name: "Likekomek",
+    address: "пр. Тауелсиздик, 39",
+    lat: 51.1785,
+    lon: 71.4512,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "24/7 access."
+  },
+  {
+    id: 31,
+    name: "Likekomek",
+    address: "ул. Ахмет Байтурсынулы, 39/3",
+    lat: 51.1305,
+    lon: 71.4135,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "Charity box nearby other points."
+  },
+  {
+    id: 32,
+    name: "Likekomek",
+    address: "ул. Кенесары, 4",
+    lat: 51.1645,
+    lon: 71.4145,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "Perfect rating; central location."
+  },
+  {
+    id: 33,
+    name: "Likekomek",
+    address: "ул. Сыганак, 17/10",
+    lat: 51.1445,
+    lon: 71.4356,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "High-rated charity container."
+  },
+  {
+    id: 34,
+    name: "Likekomek",
+    address: "ул. Куйши Дина, 23/3",
+    lat: 51.1125,
+    lon: 71.4245,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "24/7 charity point."
+  },
+  {
+    id: 35,
+    name: "Likekomek",
+    address: "ул. Ыкылас Дукенулы, 31",
+    lat: 51.1856,
+    lon: 71.4625,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "Perfect rating."
+  },
+  {
+    id: 36,
+    name: "Likekomek",
+    address: "пр. Сарыарка, 31/2",
+    lat: 51.1685,
+    lon: 71.4048,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "Lower rating; near LS branch."
+  },
+  {
+    id: 37,
+    name: "Likekomek",
+    address: "пр. Абылай хана, 31",
+    lat: 51.1518,
+    lon: 71.4282,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "Charity container."
+  },
+  {
+    id: 38,
+    name: "Likekomek",
+    address: "пр. Тауелсиздик, 48",
+    lat: 51.1795,
+    lon: 71.4525,
+    types: ["plastic", "paper"],
+    hours: "24/7",
+    notes: "24/7 access point."
+  },
+  {
+    id: 39,
+    name: "Freedom фандомат",
+    address: "ТРЦ Asia Park, пр. Кабанбай батыр, 21",
+    lat: 51.1612,
+    lon: 71.4412,
+    types: ["plastic"],
+    hours: "10:00-22:00",
+    notes: "Bottle return machine in mall; low rating possibly due to rewards."
+  },
+  {
+    id: 40,
+    name: "Freedom фандомат",
+    address: "ЕНУ, ул. Кажымукан, 13",
+    lat: 51.0922,
+    lon: 71.4068,
+    types: ["plastic"],
+    hours: "08:00-20:00",
+    notes: "University location; mid rating."
+  },
+  {
+    id: 41,
+    name: "Freedom фандомат",
+    address: "ул. Кордай, 6",
+    lat: 51.0875,
+    lon: 71.3925,
+    types: ["plastic"],
+    hours: "09:00-18:00",
+    notes: "Plastic bottle return point."
+  },
+  {
+    id: 42,
+    name: "Freedom фандомат",
+    address: "шоссе Коргалжын, 13д",
+    lat: 51.0825,
+    lon: 71.3815,
+    types: ["plastic"],
+    hours: "09:00-18:00",
+    notes: "Bottle machine; decent rating."
+  },
+  {
+    id: 43,
+    name: "Sparklo",
+    address: "ул. Динмухамед Конаев, 10",
+    lat: 51.1285,
+    lon: 71.4298,
+    types: ["plastic"],
+    hours: "09:00-18:00",
+    notes: "Plastic reception; low rating reported."
+  },
+  {
+    id: 44,
+    name: "Алғыс (социальный магазин)",
+    address: "ул. Сауран, 14",
+    lat: 51.1125,
+    lon: 71.4156,
+    types: ["plastic", "paper"],
+    hours: "09:00-18:00",
+    notes: "Social store with recycling acceptance."
+  },
+  {
+    id: 45,
+    name: "AG Vyhlop",
+    address: "ул. Жетиген, 35/3",
+    lat: 51.1685,
+    lon: 71.4892,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Catalyst/metal reception; high rating."
+  },
+  {
+    id: 46,
+    name: "Ast.cat",
+    address: "ул. Александра Пушкина, 24",
+    lat: 51.1312,
+    lon: 71.4385,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Specialized in catalysts; good rating."
+  },
+  {
+    id: 47,
+    name: "Vihlopnaya.01",
+    address: "ул. Акыртас, 1",
+    lat: 51.1045,
+    lon: 71.3956,
+    types: ["metal"],
+    hours: "09:00-18:00",
+    notes: "Catalyst point; perfect rating."
+  },
+  {
+    id: 48,
+    name: "Ящик для сбора вещей",
+    address: "ТРЦ Аружан, ул. Илияса Жансугурова, 8/1",
+    lat: 51.1425,
+    lon: 71.4645,
+    types: ["plastic", "paper"],
+    hours: "10:00-22:00",
+    notes: "Collection box in mall."
+  },
+  {
+    id: 49,
+    name: "Mega Silk Way (ТРЦ)",
+    address: "Mega Silk Way",
+    lat: 51.1282,
+    lon: 71.4306,
+    types: ["plastic", "glass", "paper"],
+    hours: "10:00-22:00",
+    notes: "Mall with possible recycling bins/points."
+  },
+  {
+    id: 50,
+    name: "Khan Shatyr (ТРЦ)",
+    address: "Khan Shatyr",
+    lat: 51.1327,
+    lon: 71.4062,
+    types: ["plastic", "paper"],
+    hours: "10:00-22:00",
+    notes: "Major shopping center; eco points likely inside."
   }
 ];
 
@@ -2048,3 +2492,4 @@ function submitInitiative(event) {
     
     alert('Initiative created successfully!');
 }
+
